@@ -5,33 +5,61 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Models\Department;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class DepartmentController extends Controller
 {
     // GET /api/departments
-    public function index()
-    {
+   // GET /api/departments
+public function index()
+{
+    $departments = Department::all();
+
+    if ($departments->isEmpty()) {
         return response()->json([
-            'status' => true,
-            'data' => Department::all()
-        ]);
+            'success' => false,
+            'message' => 'No departments found',
+            'data' => null
+        ], 404);
     }
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Departments retrieved successfully.',
+        'data' => $departments
+    ]);
+}
 
     // POST /api/departments
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'departmentName' => 'required|string|max:255'
-        ]);
+   // POST /api/departments
+public function store(Request $request)
+{
+    $validator = Validator::make($request->all(), [
+        'departments' => 'required|array|min:1',
+        'departments.*.departmentName' => 'required|string|max:255',
+    ]);
 
-        $department = Department::create($validated);
-
+    if ($validator->fails()) {
         return response()->json([
-            'status' => true,
-            'message' => 'Department created successfully',
-            'data' => $department
-        ], 201);
+            'success' => false,
+            'message' => 'Validation failed',
+            'data' => $validator->errors()
+        ], 422);
     }
+
+    $createdDepartments = [];
+
+    foreach ($request->departments as $deptData) {
+        $createdDepartments[] = Department::create($deptData);
+    }
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Departments created successfully.',
+        'data' => $createdDepartments
+    ], 201);
+}
+
 
     // GET /api/departments/{id}
     public function show($id)
@@ -40,13 +68,15 @@ class DepartmentController extends Controller
 
         if (!$department) {
             return response()->json([
-                'status' => false,
-                'message' => 'Department not found'
+                'success' => false,
+                'message' => 'Department not found',
+                'data' => null
             ], 404);
         }
 
         return response()->json([
-            'status' => true,
+            'success' => true,
+            'message' => 'Department retrieved successfully.',
             'data' => $department
         ]);
     }
@@ -58,20 +88,29 @@ class DepartmentController extends Controller
 
         if (!$department) {
             return response()->json([
-                'status' => false,
-                'message' => 'Department not found'
+                'success' => false,
+                'message' => 'Department not found',
+                'data' => null
             ], 404);
         }
 
-        $validated = $request->validate([
-            'departmentName' => 'required|string|max:255'
+        $validator = Validator::make($request->all(), [
+            'departmentName' => 'required|string|max:255',
         ]);
 
-        $department->update($validated);
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'data' => $validator->errors()
+            ], 422);
+        }
+
+        $department->update($validator->validated());
 
         return response()->json([
-            'status' => true,
-            'message' => 'Department updated successfully',
+            'success' => true,
+            'message' => 'Department updated successfully.',
             'data' => $department
         ]);
     }
@@ -83,16 +122,18 @@ class DepartmentController extends Controller
 
         if (!$department) {
             return response()->json([
-                'status' => false,
-                'message' => 'Department not found'
+                'success' => false,
+                'message' => 'Department not found',
+                'data' => null
             ], 404);
         }
 
         $department->delete();
 
         return response()->json([
-            'status' => true,
-            'message' => 'Department deleted successfully'
+            'success' => true,
+            'message' => 'Department deleted successfully.',
+            'data' => null
         ]);
     }
 }
