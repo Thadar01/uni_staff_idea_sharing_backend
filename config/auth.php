@@ -36,15 +36,24 @@ return [
     */
 
     'guards' => [
-        'web' => [
-            'driver' => 'session',
-            'provider' => 'users',
-        ],
-         'staffs' => [
-         'driver' => 'eloquent',
-         'model' => App\Models\Staff::class,
-        ],
+    'web' => [
+        'driver' => 'session',
+        'provider' => 'users',
     ],
+
+    'api' => [
+        'driver' => 'token',
+        'provider' => 'users',
+        'hash' => false,
+    ],
+
+    // Add this guard for staff
+    'staff' => [
+        'driver' => 'jwt',      // use JWT driver
+        'provider' => 'staffs', // this is the provider defined below
+    ],
+],
+
 
     /*
     |--------------------------------------------------------------------------
@@ -69,10 +78,10 @@ return [
             'model' => env('AUTH_MODEL', App\Models\User::class),
         ],
 
-        // 'users' => [
-        //     'driver' => 'database',
-        //     'table' => 'users',
-        // ],
+       'staffs' => [
+        'driver' => 'eloquent',
+        'model' => App\Models\Staff::class,
+    ],
     ],
 
     /*

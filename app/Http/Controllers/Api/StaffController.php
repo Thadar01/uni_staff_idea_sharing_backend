@@ -3,55 +3,105 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\Staff;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Validator;
 
 class StaffController extends Controller
 {
     /**
      * List all staff
      */
-    public function index()
-    {
-        $staffs = Staff::with(['department', 'role'])->get();
+   public function index(Request $request)
+{
+    // Ensure the user is authenticated using the 'staff' guard
+    $staffUser = auth('staff')->user();
 
+    if (!$staffUser) {
         return response()->json([
-            'status' => true,
-            'data' => $staffs
-        ]);
+            'success' => false,
+            'message' => 'Unauthorized. Please log in.',
+            'data' => null
+        ], 401);
     }
+
+    // Retrieve all staff with their department and role
+    $staffs = Staff::with(['department', 'role'])->get();
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Staff list retrieved successfully.',
+        'data' => $staffs
+    ]);
+}
+
 
     /**
      * Create a new staff
      */
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'staffName' => 'required|string|max:255',
-            'staffEmail' => 'required|email|unique:staffs,staffEmail',
-            'staffPhNo' => 'required|string|unique:staffs,staffPhNo',
-            'staffPassword' => 'required|string|min:6',
-            'staffDOB' => 'required|date',
-            'staffAddress' => 'required|string',
-            'departmentID' => 'required|exists:departments,departmentID',
-            'roleID' => 'required|exists:roles,roleID',
-            'staffProfile' => 'nullable|string',
-            'termsAccepted' => 'required|boolean',
-            'termsAcceptedDate' => 'nullable|date',
-        ]);
+  public function store(Request $request)
+{
+    // Validate request (excluding password)
+    $validator = Validator::make($request->all(), [
+        'staffName' => 'required|string|max:255',
+        'staffEmail' => 'required|email|unique:staffs,staffEmail',
+        'staffPhNo' => 'required|string|unique:staffs,staffPhNo',
+        'staffDOB' => 'required|date',
+        'staffAddress' => 'required|string',
+        'departmentID' => 'required|exists:departments,departmentID',
+        'roleID' => 'required|exists:roles,roleID',
+        'staffProfile' => 'nullable|image|mimes:jpg,jpeg,png|max:2048', // Only JPG/PNG, max 2MB
+        'termsAccepted' => 'nullable|boolean',
+        'termsAcceptedDate' => 'nullable|date',
+    ]);
 
-        $validated['staffPassword'] = Hash::make($validated['staffPassword']);
-
-        $staff = Staff::create($validated);
-
+    if ($validator->fails()) {
         return response()->json([
-            'status' => true,
-            'message' => 'Staff created successfully',
-            'data' => $staff
-        ], 201);
+            'success' => false,
+            'message' => 'Validation failed',
+            'data' => $validator->errors()
+        ], 422);
     }
+
+    $data = $validator->validated();
+
+    // Handle staff profile upload
+    if ($request->hasFile('staffProfile')) {
+        $file = $request->file('staffProfile');
+
+        // Folder path
+        $folderPath = public_path('uploads/staff_profiles');
+
+        // Create folder if it doesn't exist
+        if (!file_exists($folderPath)) {
+            mkdir($folderPath, 0755, true);
+        }
+
+        // Generate unique file name
+        $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+
+        // Move file to folder
+        $file->move($folderPath, $filename);
+
+        // Save path in database (relative path)
+        $data['staffProfile'] = 'uploads/staff_profiles/' . $filename;
+    }
+
+    // Set default password "Staff123!@#" and hash with bcrypt rounds 10
+    $defaultPassword = 'Staff123!@#';
+    $data['staffPassword'] = Hash::make($defaultPassword, ['rounds' => 10]);
+
+    $staff = Staff::create($data);
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Staff created successfully with default password.',
+        'data' => $staff
+    ], 201);
+}
+
 
     /**
      * Show a single staff
@@ -62,13 +112,15 @@ class StaffController extends Controller
 
         if (!$staff) {
             return response()->json([
-                'status' => false,
-                'message' => 'Staff not found'
+                'success' => false,
+                'message' => 'Staff not found',
+                'data' => null
             ], 404);
         }
 
         return response()->json([
-            'status' => true,
+            'success' => true,
+            'message' => 'Staff retrieved successfully.',
             'data' => $staff
         ]);
     }
@@ -76,43 +128,80 @@ class StaffController extends Controller
     /**
      * Update staff
      */
-    public function update(Request $request, $id)
-    {
-        $staff = Staff::find($id);
+   public function update(Request $request, $id)
+{
+    $staff = Staff::find($id);
 
-        if (!$staff) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Staff not found'
-            ], 404);
-        }
-
-        $validated = $request->validate([
-            'staffName' => 'sometimes|string|max:255',
-            'staffEmail' => ['sometimes','email', Rule::unique('staffs')->ignore($staff->staffID, 'staffID')],
-            'staffPhNo' => ['sometimes','string', Rule::unique('staffs')->ignore($staff->staffID, 'staffID')],
-            'staffPassword' => 'sometimes|string|min:6',
-            'staffDOB' => 'sometimes|date',
-            'staffAddress' => 'sometimes|string',
-            'departmentID' => 'sometimes|exists:departments,departmentID',
-            'roleID' => 'sometimes|exists:roles,roleID',
-            'staffProfile' => 'nullable|string',
-            'termsAccepted' => 'sometimes|boolean',
-            'termsAcceptedDate' => 'nullable|date',
-        ]);
-
-        if (isset($validated['staffPassword'])) {
-            $validated['staffPassword'] = Hash::make($validated['staffPassword']);
-        }
-
-        $staff->update($validated);
-
+    if (!$staff) {
         return response()->json([
-            'status' => true,
-            'message' => 'Staff updated successfully',
-            'data' => $staff
-        ]);
+            'success' => false,
+            'message' => 'Staff not found',
+            'data' => null
+        ], 404);
     }
+
+    $validator = Validator::make($request->all(), [
+        'staffName' => 'sometimes|string|max:255',
+        'staffEmail' => ['sometimes', 'email', Rule::unique('staffs')->ignore($staff->staffID, 'staffID')],
+        'staffPhNo' => ['sometimes', 'string', Rule::unique('staffs')->ignore($staff->staffID, 'staffID')],
+        'staffPassword' => 'sometimes|string|min:6',
+        'staffDOB' => 'sometimes|date',
+        'staffAddress' => 'sometimes|string',
+        'departmentID' => 'sometimes|exists:departments,departmentID',
+        'roleID' => 'sometimes|exists:roles,roleID',
+        'staffProfile' => 'nullable|image|mimes:jpg,jpeg,png|max:2048', // Only JPG/PNG
+        'termsAccepted' => 'sometimes|boolean',
+        'termsAcceptedDate' => 'nullable|date',
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Validation failed',
+            'data' => $validator->errors()
+        ], 422);
+    }
+
+    $data = $validator->validated();
+
+    // Handle staff profile upload
+    if ($request->hasFile('staffProfile')) {
+        $file = $request->file('staffProfile');
+        $folderPath = public_path('uploads/staff_profiles');
+
+        // Create folder if it doesn't exist
+        if (!file_exists($folderPath)) {
+            mkdir($folderPath, 0755, true);
+        }
+
+        // Delete previous photo if exists
+        if ($staff->staffProfile && file_exists(public_path($staff->staffProfile))) {
+            unlink(public_path($staff->staffProfile));
+        }
+
+        // Generate unique file name
+        $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+
+        // Move file to folder
+        $file->move($folderPath, $filename);
+
+        // Save path in database (relative path)
+        $data['staffProfile'] = 'uploads/staff_profiles/' . $filename;
+    }
+
+    // Hash password if provided
+    if (isset($data['staffPassword'])) {
+        $data['staffPassword'] = Hash::make($data['staffPassword'], ['rounds' => 10]);
+    }
+
+    $staff->update($data);
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Staff updated successfully.',
+        'data' => $staff
+    ]);
+}
 
     /**
      * Delete staff
@@ -123,16 +212,18 @@ class StaffController extends Controller
 
         if (!$staff) {
             return response()->json([
-                'status' => false,
-                'message' => 'Staff not found'
+                'success' => false,
+                'message' => 'Staff not found',
+                'data' => null
             ], 404);
         }
 
         $staff->delete();
 
         return response()->json([
-            'status' => true,
-            'message' => 'Staff deleted successfully'
+            'success' => true,
+            'message' => 'Staff deleted successfully.',
+            'data' => null
         ]);
     }
 }

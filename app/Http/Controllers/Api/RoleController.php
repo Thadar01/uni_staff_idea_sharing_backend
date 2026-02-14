@@ -5,26 +5,52 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Role;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class RoleController extends Controller
 {
     // GET all roles
     public function index()
     {
-        return response()->json(Role::all());
+        $roles = Role::all();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Roles retrieved successfully.',
+            'data' => $roles
+        ]);
     }
 
     // POST create role
-    public function store(Request $request)
-    {
-        $request->validate([
-            'roleName' => 'required|string|max:255'
-        ]);
+  // POST create role(s)
+public function store(Request $request)
+{
+    $validator = Validator::make($request->all(), [
+        'roles' => 'required|array|min:1',
+        'roles.*.roleName' => 'required|string|max:255',
+    ]);
 
-        $role = Role::create($request->all());
-
-        return response()->json($role, 201);
+    if ($validator->fails()) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Validation failed',
+            'data' => $validator->errors()
+        ], 422);
     }
+
+    $createdRoles = [];
+
+    foreach ($request->roles as $roleData) {
+        $createdRoles[] = Role::create($roleData);
+    }
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Roles created successfully.',
+        'data' => $createdRoles
+    ], 201);
+}
+
 
     // GET single role
     public function show($id)
@@ -32,10 +58,18 @@ class RoleController extends Controller
         $role = Role::find($id);
 
         if (!$role) {
-            return response()->json(['message' => 'Role not found'], 404);
+            return response()->json([
+                'success' => false,
+                'message' => 'Role not found',
+                'data' => null
+            ], 404);
         }
 
-        return response()->json($role);
+        return response()->json([
+            'success' => true,
+            'message' => 'Role retrieved successfully.',
+            'data' => $role
+        ]);
     }
 
     // PUT update role
@@ -44,16 +78,32 @@ class RoleController extends Controller
         $role = Role::find($id);
 
         if (!$role) {
-            return response()->json(['message' => 'Role not found'], 404);
+            return response()->json([
+                'success' => false,
+                'message' => 'Role not found',
+                'data' => null
+            ], 404);
         }
 
-        $request->validate([
-            'roleName' => 'required|string|max:255'
+        $validator = Validator::make($request->all(), [
+            'roleName' => 'required|string|max:255',
         ]);
 
-        $role->update($request->all());
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'data' => $validator->errors()
+            ], 422);
+        }
 
-        return response()->json($role);
+        $role->update($validator->validated());
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Role updated successfully.',
+            'data' => $role
+        ]);
     }
 
     // DELETE role
@@ -62,11 +112,19 @@ class RoleController extends Controller
         $role = Role::find($id);
 
         if (!$role) {
-            return response()->json(['message' => 'Role not found'], 404);
+            return response()->json([
+                'success' => false,
+                'message' => 'Role not found',
+                'data' => null
+            ], 404);
         }
 
         $role->delete();
 
-        return response()->json(['message' => 'Role deleted successfully']);
+        return response()->json([
+            'success' => true,
+            'message' => 'Role deleted successfully.',
+            'data' => null
+        ]);
     }
 }
