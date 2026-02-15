@@ -24,19 +24,19 @@ Route::post('/staff/login', [StaffAuthController::class, 'login']);
     Route::get('/roles', [RoleController::class, 'index']);
     Route::get('/roles/{id}', [RoleController::class, 'show']);
     Route::post('/roles', [RoleController::class, 'store']);
-    Route::put('/roles/{id}', [RoleController::class, 'update']);
+    Route::post('/roles/{id}', [RoleController::class, 'update']);
     Route::delete('/roles/{id}', [RoleController::class, 'destroy']);
 
     // Departments
     Route::get('/departments', [DepartmentController::class, 'index']);
     Route::get('/departments/{id}', [DepartmentController::class, 'show']);
     Route::post('/departments', [DepartmentController::class, 'store']);
-    Route::put('/departments/{id}', [DepartmentController::class, 'update']);
+    Route::post('/departments/{id}', [DepartmentController::class, 'update']);
     Route::delete('/departments/{id}', [DepartmentController::class, 'destroy']);
 
     // Staffs
     Route::get('/staffs', [StaffController::class, 'index']);
     Route::get('/staffs/{id}', [StaffController::class, 'show']);
     Route::post('/staffs', [StaffController::class, 'store']);
-    Route::put('/staffs/{id}', [StaffController::class, 'update']);
+    Route::post('/staffs/{id}', [StaffController::class, 'update']);
     Route::delete('/staffs/{id}', [StaffController::class, 'destroy']);
