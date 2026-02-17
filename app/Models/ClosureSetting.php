@@ -14,6 +14,7 @@ class ClosureSetting extends Model
     protected $primaryKey = 'settingID';
 
     protected $fillable = [
+        'title',
         'closureDate',
         'finalclosureDate',
         'academicYear'

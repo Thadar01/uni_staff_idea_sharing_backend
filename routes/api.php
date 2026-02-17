@@ -3,6 +3,16 @@ use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\API\StaffController;
 use App\Http\Controllers\API\DepartmentController;
 use App\Http\Controllers\API\StaffAuthController;
+use App\Http\Controllers\API\PermissionController;
+use App\Http\Controllers\API\RolePermissionController;
+use App\Http\Controllers\API\CategoryController;
+use App\Http\Controllers\API\ClosureSettingController;
+use App\Http\Controllers\API\IdeaController;
+use App\Http\Controllers\API\IdeaCategoryController;
+use App\Http\Controllers\API\DocumentController;
+use App\Http\Controllers\API\CommentController;
+use App\Http\Controllers\API\VoteController;
+
 
 // ======================
 // Public Routes
@@ -24,19 +34,82 @@ Route::post('/staff/login', [StaffAuthController::class, 'login']);
     Route::get('/roles', [RoleController::class, 'index']);
     Route::get('/roles/{id}', [RoleController::class, 'show']);
     Route::post('/roles', [RoleController::class, 'store']);
-    Route::put('/roles/{id}', [RoleController::class, 'update']);
+    Route::post('/roles/{id}', [RoleController::class, 'update']);
     Route::delete('/roles/{id}', [RoleController::class, 'destroy']);
 
     // Departments
     Route::get('/departments', [DepartmentController::class, 'index']);
     Route::get('/departments/{id}', [DepartmentController::class, 'show']);
     Route::post('/departments', [DepartmentController::class, 'store']);
-    Route::put('/departments/{id}', [DepartmentController::class, 'update']);
+    Route::post('/departments/{id}', [DepartmentController::class, 'update']);
     Route::delete('/departments/{id}', [DepartmentController::class, 'destroy']);
 
     // Staffs
     Route::get('/staffs', [StaffController::class, 'index']);
     Route::get('/staffs/{id}', [StaffController::class, 'show']);
     Route::post('/staffs', [StaffController::class, 'store']);
-    Route::put('/staffs/{id}', [StaffController::class, 'update']);
+    Route::post('/staffs/{id}', [StaffController::class, 'update']);
     Route::delete('/staffs/{id}', [StaffController::class, 'destroy']);
+
+    // Permissions
+    Route::get('/permissions', [PermissionController::class, 'index']);
+    Route::get('/permissions/{id}', [PermissionController::class, 'show']);
+    Route::post('/permissions', [PermissionController::class, 'store']);
+    Route::post('/permissions/{id}', [PermissionController::class, 'update']);
+    Route::delete('/permissions/{id}', [PermissionController::class, 'destroy']);
+
+    // Role Permissions
+    Route::get('/role-permissions', [RolePermissionController::class, 'index']);
+    Route::get('/role-permissions/{id}', [RolePermissionController::class, 'show']);
+    Route::post('/role-permissions', [RolePermissionController::class, 'store']);
+    Route::post('/role-permissions/{id}', [RolePermissionController::class, 'update']);
+    Route::delete('/role-permissions/{id}', [RolePermissionController::class, 'destroy']);
+
+     // Categories
+    Route::get('/categories', [CategoryController::class, 'index']);
+    Route::get('/categories/{id}', [CategoryController::class, 'show']);
+    Route::post('/categories', [CategoryController::class, 'store']);
+    Route::post('/categories/{id}', [CategoryController::class, 'update']);
+    Route::delete('/categories/{id}', [CategoryController::class, 'destroy']);
+
+    // Closure Settings
+    Route::get('/closure-settings', [ClosureSettingController::class, 'index']);
+    Route::get('/closure-settings/{id}', [ClosureSettingController::class, 'show']);
+    Route::post('/closure-settings', [ClosureSettingController::class, 'store']);
+    Route::post('/closure-settings/{id}', [ClosureSettingController::class, 'update']);
+    Route::delete('/closure-settings/{id}', [ClosureSettingController::class, 'destroy']);
+
+    // Ideas
+    Route::get('/ideas', [IdeaController::class, 'index']);
+    Route::get('/ideas/{id}', [IdeaController::class, 'show']);
+    Route::post('/ideas', [IdeaController::class, 'store']);
+    Route::post('/ideas/{id}', [IdeaController::class, 'update']);
+    Route::delete('/ideas/{id}', [IdeaController::class, 'destroy']);
+
+    // Idea-Category mappings
+    Route::get('/idea-categories', [IdeaCategoryController::class, 'index']);
+    Route::get('/idea-categories/{id}', [IdeaCategoryController::class, 'show']);
+    Route::post('/idea-categories', [IdeaCategoryController::class, 'store']);
+    Route::post('/idea-categories/{id}', [IdeaCategoryController::class, 'update']);
+    Route::delete('/idea-categories/{id}', [IdeaCategoryController::class, 'destroy']);
+
+    // Documents
+    Route::get('/documents', [DocumentController::class, 'index']);
+    Route::get('/documents/{id}', [DocumentController::class, 'show']);
+    Route::post('/documents', [DocumentController::class, 'store']);
+    Route::post('/documents/{id}', [DocumentController::class, 'update']);
+    Route::delete('/documents/{id}', [DocumentController::class, 'destroy']);
+
+    // Comments
+    Route::get('/comments', [CommentController::class, 'index']);
+    Route::get('/comments/{id}', [CommentController::class, 'show']);
+    Route::post('/comments', [CommentController::class, 'store']);
+    Route::post('/comments/{id}', [CommentController::class, 'update']);
+    Route::delete('/comments/{id}', [CommentController::class, 'destroy']);
+
+    // Votes
+    Route::get('/votes', [VoteController::class, 'index']);
+    Route::get('/votes/{id}', [VoteController::class, 'show']);
+    Route::post('/votes', [VoteController::class, 'store']);
+    Route::post('/votes/{id}', [VoteController::class, 'update']);
+    Route::delete('/votes/{id}', [VoteController::class, 'destroy']);
