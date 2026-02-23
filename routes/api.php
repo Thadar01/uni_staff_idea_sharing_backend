@@ -54,15 +54,14 @@ Route::post('/staff/login', [StaffAuthController::class, 'login']);
     // Permissions
     Route::get('/permissions', [PermissionController::class, 'index']);
     Route::get('/permissions/{id}', [PermissionController::class, 'show']);
-    Route::post('/permissions', [PermissionController::class, 'store']);
-    Route::post('/permissions/{id}', [PermissionController::class, 'update']);
-    Route::delete('/permissions/{id}', [PermissionController::class, 'destroy']);
+    // Route::post('/permissions', [PermissionController::class, 'store']);
+    // Route::post('/permissions/{id}', [PermissionController::class, 'update']);
+    // Route::delete('/permissions/{id}', [PermissionController::class, 'destroy']);
 
     // Role Permissions
     Route::get('/role-permissions', [RolePermissionController::class, 'index']);
     Route::get('/role-permissions/{id}', [RolePermissionController::class, 'show']);
-    Route::post('/role-permissions', [RolePermissionController::class, 'store']);
-    Route::post('/role-permissions/{id}', [RolePermissionController::class, 'update']);
+    Route::post('/roles/{roleID}/permissions', [RolePermissionController::class, 'givePermission']);
     Route::delete('/role-permissions/{id}', [RolePermissionController::class, 'destroy']);
 
      // Categories

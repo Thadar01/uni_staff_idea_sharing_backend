@@ -7,69 +7,82 @@ use App\Models\RolePermission;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Database\QueryException;
+use App\Models\Role;
 
 class RolePermissionController extends Controller
 {
-    public function index()
-    {
+   public function index()
+{
+    $rolePermissions = RolePermission::all();
+
+    if ($rolePermissions->isEmpty()) {
         return response()->json([
-            'success' => true,
-            'message' => 'Role permissions retrieved successfully',
-            'data' => RolePermission::all()
-        ], 200);
+            'success' => false,
+            'message' => 'No role permissions found',
+        ], 404);
     }
 
-    public function store(Request $request)
-    {
-        try {
-            $validated = $request->validate([
-                'roleID' => 'required|integer|exists:roles,roleID',
-                'permissionID' => 'required|integer|exists:permissions,permissionID'
-            ]);
+    return response()->json([
+        'success' => true,
+        'message' => 'Role permissions retrieved successfully',
+        'data' => $rolePermissions
+    ], 200);
+}
 
-            // Prevent duplicate role-permission pair
-            $exists = RolePermission::where('roleID', $validated['roleID'])
-                ->where('permissionID', $validated['permissionID'])
-                ->exists();
+//   public function store(Request $request)
+// {
+//     try {
+//         $validated = $request->validate([
+//             'roleID' => 'required|integer|exists:roles,roleID',
+//             'permissionIDs' => 'required|array|min:1',
+//             'permissionIDs.*' => 'integer|exists:permissions,permissionID'
+//         ]);
 
-            if ($exists) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'This role already has this permission',
-                    'data' => null
-                ], 409);
-            }
+//         $roleID = $validated['roleID'];
+//         $permissionIDs = $validated['permissionIDs'];
 
-            $rolePermission = RolePermission::create($validated);
+//         $createdPermissions = [];
+//         $skippedPermissions = [];
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Permission assigned to role successfully',
-                'data' => $rolePermission
-            ], 201);
+//         foreach ($permissionIDs as $permissionID) {
 
-        } catch (ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'data' => $e->errors()
-            ], 422);
+//             $exists = RolePermission::where('roleID', $roleID)
+//                 ->where('permissionID', $permissionID)
+//                 ->exists();
 
-        } catch (QueryException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Database error occurred',
-                'data' => $e->getMessage()
-            ], 500);
+//             if ($exists) {
+//                 $skippedPermissions[] = $permissionID;
+//                 continue;
+//             }
 
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unexpected error occurred',
-                'data' => $e->getMessage()
-            ], 500);
-        }
-    }
+//             $createdPermissions[] = RolePermission::create([
+//                 'roleID' => $roleID,
+//                 'permissionID' => $permissionID
+//             ]);
+//         }
+
+//         return response()->json([
+//             'success' => true,
+//             'message' => 'Permissions processed successfully',
+//             'assigned' => $createdPermissions,
+//             'skipped' => $skippedPermissions
+//         ], 201);
+
+//     } catch (ValidationException $e) {
+//         return response()->json([
+//             'success' => false,
+//             'message' => 'Validation failed',
+//             'data' => $e->errors()
+//         ], 422);
+
+//     } catch (\Exception $e) {
+//         return response()->json([
+//             'success' => false,
+//             'message' => 'Unexpected error occurred',
+//             'data' => $e->getMessage()
+//         ], 500);
+//     }
+// }
 
     public function show($id)
     {
@@ -90,61 +103,56 @@ class RolePermissionController extends Controller
         ], 200);
     }
 
-    public function update(Request $request, $id)
-    {
-        try {
-            $rolePermission = RolePermission::find($id);
-
-            if (!$rolePermission) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Role permission not found',
-                    'data' => null
-                ], 404);
-            }
-
-            $validated = $request->validate([
-                'roleID' => 'required|integer|exists:roles,roleID',
-                'permissionID' => 'required|integer|exists:permissions,permissionID'
-            ]);
-
-            // Prevent duplicate on update
-            $exists = RolePermission::where('roleID', $validated['roleID'])
-                ->where('permissionID', $validated['permissionID'])
-                ->where('rolepermissionID', '!=', $id)
-                ->exists();
-
-            if ($exists) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'This role already has this permission',
-                    'data' => null
-                ], 409);
-            }
-
-            $rolePermission->update($validated);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Role permission updated successfully',
-                'data' => $rolePermission
-            ], 200);
-
-        } catch (ValidationException $e) {
+public function givePermission(Request $request, $roleID)
+{
+    try {
+        // Check if role exists
+        $role = Role::find($roleID);
+        if (!$role) {
             return response()->json([
                 'success' => false,
-                'message' => 'Validation failed',
-                'data' => $e->errors()
-            ], 422);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unexpected error occurred',
-                'data' => $e->getMessage()
-            ], 500);
+                'message' => 'Role not found',
+                'data' => null
+            ], 404);
         }
+
+        // Validate request
+        $validated = $request->validate([
+            'permissionIDs' => 'required|array|min:1',
+            'permissionIDs.*' => 'integer|exists:permissions,permissionID'
+        ]);
+
+        $permissionIDs = $validated['permissionIDs'];
+
+        // Sync permissions: add new, remove missing
+        $role->permissions()->sync($permissionIDs);
+
+        // Return current permissions
+        $updatedPermissions = $role->permissions()->get();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Role permissions updated successfully',
+            'data' => $updatedPermissions
+        ], 200);
+
+    } catch (ValidationException $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Validation failed',
+            'data' => $e->errors()
+        ], 422);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Unexpected error occurred',
+            'data' => $e->getMessage()
+        ], 500);
     }
+}
+
+
 
     public function destroy($id)
     {

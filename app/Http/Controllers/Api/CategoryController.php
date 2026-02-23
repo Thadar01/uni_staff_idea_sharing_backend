@@ -10,52 +10,72 @@ use Illuminate\Database\QueryException;
 
 class CategoryController extends Controller
 {
-    public function index()
-    {
+   public function index()
+{
+    $categories = Category::all();
+
+    if ($categories->isEmpty()) {
+        return response()->json([
+            'success' => false,
+            'message' => 'No categories found',
+            'data' => []
+        ], 404);
+    }
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Categories retrieved successfully',
+        'data' => $categories
+    ], 200);
+}
+
+   public function store(Request $request)
+{
+    try {
+        // Validate request
+        $validated = $request->validate([
+            'categories' => 'required|array|min:1',
+            'categories.*' => 'required|string|max:255|distinct'
+        ]);
+
+        $categoriesInput = $validated['categories'];
+
+        $createdCategories = [];
+        $skippedCategories = [];
+
+        foreach ($categoriesInput as $name) {
+            // Check if category already exists
+            $exists = Category::where('categoryname', $name)->exists();
+            if ($exists) {
+                $skippedCategories[] = $name;
+                continue;
+            }
+
+            $createdCategories[] = Category::create(['categoryname' => $name]);
+        }
+
         return response()->json([
             'success' => true,
-            'message' => 'Categories retrieved successfully',
-            'data' => Category::all()
-        ], 200);
+            'message' => 'Categories processed successfully',
+            'created' => $createdCategories,
+            'skipped' => $skippedCategories
+        ], 201);
+
+    } catch (ValidationException $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Validation failed',
+            'data' => $e->errors()
+        ], 422);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Unexpected error occurred',
+            'data' => $e->getMessage()
+        ], 500);
     }
-
-    public function store(Request $request)
-    {
-        try {
-            $validated = $request->validate([
-                'categoryname' => 'required|string|max:255|unique:categories,categoryname'
-            ]);
-
-            $category = Category::create($validated);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Category created successfully',
-                'data' => $category
-            ], 201);
-
-        } catch (ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'data' => $e->errors()
-            ], 422);
-
-        } catch (QueryException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Database error occurred',
-                'data' => $e->getMessage()
-            ], 500);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unexpected error occurred',
-                'data' => $e->getMessage()
-            ], 500);
-        }
-    }
+}
 
     public function show($id)
     {
@@ -118,33 +138,35 @@ class CategoryController extends Controller
         }
     }
 
-    public function destroy($id)
-    {
-        try {
-            $category = Category::find($id);
+public function destroy($id)
+{
+    try {
+        $category = Category::find($id);
 
-            if (!$category) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Category not found',
-                    'data' => null
-                ], 404);
-            }
-
-            $category->delete();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Category deleted successfully',
-                'data' => null
-            ], 200);
-
-        } catch (\Exception $e) {
+        if (!$category) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to delete category',
-                'data' => $e->getMessage()
-            ], 500);
+                'message' => 'Category not found',
+                'data' => null
+            ], 404);
         }
+
+        // Soft delete by setting status to 'inactive'
+        $category->status = 'inactive';
+        $category->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Category marked as inactive successfully',
+            'data' => $category
+        ], 200);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to update category status',
+            'data' => $e->getMessage()
+        ], 500);
     }
+}
 }

@@ -14,21 +14,22 @@ class StaffController extends Controller
     /**
      * List all staff
      */
-   public function index(Request $request)
+public function index(Request $request)
 {
-    // Ensure the user is authenticated using the 'staff' guard
-    $staffUser = auth('staff')->user();
+    // $staffUser = auth('staff')->user();
 
-    if (!$staffUser) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Unauthorized. Please log in.',
-            'data' => null
-        ], 401);
-    }
+    // if (!$staffUser) {
+    //     return response()->json([
+    //         'success' => false,
+    //         'message' => 'Unauthorized. Please log in.',
+    //         'data' => null
+    //     ], 401);
+    // }
 
-    // Retrieve all staff with their department and role
-    $staffs = Staff::with(['department', 'role'])->get();
+    $staffs = Staff::with([
+        'department',
+        'role.permissions'
+    ])->get();
 
     return response()->json([
         'success' => true,
@@ -36,7 +37,6 @@ class StaffController extends Controller
         'data' => $staffs
     ]);
 }
-
 
     /**
      * Create a new staff

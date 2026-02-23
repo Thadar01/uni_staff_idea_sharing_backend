@@ -10,19 +10,24 @@ use Illuminate\Database\QueryException;
 
 class PermissionController extends Controller
 {
-   public function index()
+ public function index()
 {
     $permissions = Permission::all();
 
+    if ($permissions->isEmpty()) {
+        return response()->json([
+            'success' => false,
+            'message' => 'No permissions found',
+            'data' => []
+        ], 404);
+    }
+
     return response()->json([
         'success' => true,
-        'message' => $permissions->isEmpty()
-            ? 'No permissions found'
-            : 'Permissions retrieved successfully',
+        'message' => 'Permissions retrieved successfully',
         'data' => $permissions
     ], 200);
 }
-
     public function store(Request $request)
     {
         try {
