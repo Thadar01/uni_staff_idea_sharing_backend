@@ -19,7 +19,10 @@ class Idea extends Model
         'isAnonymous',
         'staffID',
         'settingID',
-        'status'
+        'status',
+        'viewCount',
+        'isFlagged',
+        'isCommentEnabled'
     ];
 
     // Relationship: Idea belongs to Staff
