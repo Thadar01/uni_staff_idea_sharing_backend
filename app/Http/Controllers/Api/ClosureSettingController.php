@@ -11,13 +11,23 @@ use Illuminate\Database\QueryException;
 class ClosureSettingController extends Controller
 {
     public function index()
-    {
+{
+    $closureSettings = ClosureSetting::all();
+
+    if ($closureSettings->isEmpty()) {
         return response()->json([
-            'success' => true,
-            'message' => 'Closure settings retrieved successfully',
-            'data' => ClosureSetting::all()
-        ], 200);
+            'success' => false,
+            'message' => 'No closure settings found',
+            'data' => null
+        ], 404);
     }
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Closure settings retrieved successfully',
+        'data' => $closureSettings
+    ], 200);
+}
 
     public function store(Request $request)
     {
@@ -123,33 +133,35 @@ class ClosureSettingController extends Controller
         }
     }
 
-    public function destroy($id)
-    {
-        try {
-            $closureSetting = ClosureSetting::find($id);
+   public function destroy($id)
+{
+    try {
+        $closureSetting = ClosureSetting::find($id);
 
-            if (!$closureSetting) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Closure setting not found',
-                    'data' => null
-                ], 404);
-            }
-
-            $closureSetting->delete();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Closure setting deleted successfully',
-                'data' => null
-            ], 200);
-
-        } catch (\Exception $e) {
+        if (!$closureSetting) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to delete closure setting',
-                'data' => $e->getMessage()
-            ], 500);
+                'message' => 'Closure setting not found',
+                'data' => null
+            ], 404);
         }
+
+        $closureSetting->update([
+            'status' => 'inactive'
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Closure setting status updated to inactive successfully',
+            'data' => $closureSetting->fresh()
+        ], 200);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to update closure setting status',
+            'data' => $e->getMessage()
+        ], 500);
     }
+}
 }

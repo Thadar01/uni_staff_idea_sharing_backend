@@ -17,6 +17,7 @@ class ClosureSetting extends Model
         'title',
         'closureDate',
         'finalclosureDate',
-        'academicYear'
+        'academicYear',
+        'status'
     ];
 }
