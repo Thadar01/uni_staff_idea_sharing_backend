@@ -4,15 +4,28 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\Idea;
+use App\Models\Document;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+
 
 class IdeaController extends Controller
 {
     public function index()
     {
-        $ideas = Idea::with(['staff', 'closureSetting', 'categories', 'comments', 'votes'])->get();
+        $ideas = Idea::with([
+            'staff',
+            'closureSetting',
+            'categories',
+            'comments',
+            'votes',
+            'documents'
+        ])
+        ->where('status', '!=', 'deleted')
+        ->get();
 
         return response()->json([
             'success' => true,
@@ -29,11 +42,60 @@ class IdeaController extends Controller
                 'description' => 'required|string',
                 'isAnonymous' => 'nullable|boolean',
                 'staffID' => 'required|integer|exists:staffs,staffID',
-                'settingID' => 'required|integer|exists:closure_setting,settingID',
-                'status' => 'nullable|string|in:pending,approved,rejected'
+                'status' => 'nullable|string|in:pending,approved,rejected,deleted',
+                'viewCount' => 'nullable|integer|min:0',
+                'isFlagged' => 'nullable|boolean',
+                'isCommentEnabled' => 'nullable|boolean',
+
+                'categoryIDs' => 'nullable|array',
+                'categoryIDs.*' => 'integer|exists:categories,categoryID',
+
+                'documents' => 'nullable|array',
+                'documents.*' => 'file|mimes:pdf,doc,docx,jpg,jpeg,png|max:5120'
             ]);
 
-            $idea = Idea::create($validated);
+            DB::beginTransaction();
+
+            $idea = Idea::create([
+                'title' => $validated['title'],
+                'description' => $validated['description'],
+                'isAnonymous' => $validated['isAnonymous'] ?? false,
+                'staffID' => $validated['staffID'],
+                'status' => $validated['status'] ?? 'pending',
+                'viewCount' => $validated['viewCount'] ?? 0,
+                'isFlagged' => $validated['isFlagged'] ?? false,
+                'isCommentEnabled' => $validated['isCommentEnabled'] ?? true,
+            ]);
+
+           if (!empty($validated['categoryIDs'])) {
+    $uniqueCategoryIDs = array_unique($validated['categoryIDs']);
+    $idea->categories()->attach($uniqueCategoryIDs);
+}
+
+            if ($request->hasFile('documents')) {
+                foreach ($request->file('documents') as $file) {
+                    $path = $file->store('idea_documents', 'public');
+
+                    Document::create([
+                        'docPath' => $path,
+                        'fileType' => $file->getClientOriginalExtension(),
+                        'fileSize' => $file->getSize(),
+                        'isHidden' => false,
+                        'ideaID' => $idea->ideaID,
+                    ]);
+                }
+            }
+
+            DB::commit();
+
+            $idea->load([
+                'staff',
+                'closureSetting',
+                'categories',
+                'comments',
+                'votes',
+                'documents'
+            ]);
 
             return response()->json([
                 'success' => true,
@@ -42,6 +104,8 @@ class IdeaController extends Controller
             ], 201);
 
         } catch (ValidationException $e) {
+            DB::rollBack();
+
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
@@ -49,6 +113,8 @@ class IdeaController extends Controller
             ], 422);
 
         } catch (QueryException $e) {
+            DB::rollBack();
+
             return response()->json([
                 'success' => false,
                 'message' => 'Database error occurred',
@@ -56,6 +122,8 @@ class IdeaController extends Controller
             ], 500);
 
         } catch (\Exception $e) {
+            DB::rollBack();
+
             return response()->json([
                 'success' => false,
                 'message' => 'Unexpected error occurred',
@@ -64,11 +132,42 @@ class IdeaController extends Controller
         }
     }
 
-    public function show($id)
-    {
-        $idea = Idea::with(['staff', 'closureSetting', 'categories', 'comments', 'votes'])->find($id);
+   public function show($id)
+{
+    $idea = Idea::with([
+        'staff',
+        'closureSetting',
+        'categories',
+        'votes',
+        'documents',
+        'comments' => function ($query) {
+            $query->where('status', '!=', 'deleted');
+        }
+    ])
+    ->where('status', '!=', 'deleted')
+    ->find($id);
 
-        if (!$idea) {
+    if (!$idea) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Idea not found',
+            'data' => null
+        ], 404);
+    }
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Idea retrieved successfully',
+        'data' => $idea
+    ], 200);
+}
+
+public function update(Request $request, $id)
+{
+    try {
+        $idea = Idea::with('documents')->find($id);
+
+        if (!$idea || $idea->status === 'deleted') {
             return response()->json([
                 'success' => false,
                 'message' => 'Idea not found',
@@ -76,59 +175,250 @@ class IdeaController extends Controller
             ], 404);
         }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Idea retrieved successfully',
-            'data' => $idea
-        ], 200);
-    }
+        $validated = $request->validate([
+            'title' => 'sometimes|required|string|max:255',
+            'description' => 'sometimes|required|string',
+            'isAnonymous' => 'nullable|boolean',
+            'staffID' => 'sometimes|required|integer|exists:staffs,staffID',
+            'settingID' => 'nullable|integer|exists:closure_setting,settingID',
+            'status' => 'nullable|string|in:pending,approved,rejected,deleted',
+            'viewCount' => 'nullable|integer|min:0',
+            'isFlagged' => 'nullable|boolean',
+            'isCommentEnabled' => 'nullable|boolean',
 
-    public function update(Request $request, $id)
-    {
-        try {
-            $idea = Idea::find($id);
+            'categoryIDs' => 'nullable|array',
+            'categoryIDs.*' => 'integer|distinct|exists:categories,categoryID',
 
-            if (!$idea) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Idea not found',
-                    'data' => null
-                ], 404);
+            'documents' => 'nullable|array',
+            'documents.*' => 'file|mimes:pdf,doc,docx,jpg,jpeg,png|max:5120'
+        ]);
+
+        DB::beginTransaction();
+
+        $idea->update([
+            'title' => $validated['title'] ?? $idea->title,
+            'description' => $validated['description'] ?? $idea->description,
+            'isAnonymous' => $validated['isAnonymous'] ?? $idea->isAnonymous,
+            'staffID' => $validated['staffID'] ?? $idea->staffID,
+            'settingID' => array_key_exists('settingID', $validated) ? $validated['settingID'] : $idea->settingID,
+            'status' => $validated['status'] ?? $idea->status,
+            'viewCount' => $validated['viewCount'] ?? $idea->viewCount,
+            'isFlagged' => $validated['isFlagged'] ?? $idea->isFlagged,
+            'isCommentEnabled' => $validated['isCommentEnabled'] ?? $idea->isCommentEnabled,
+        ]);
+
+        if ($request->has('categoryIDs')) {
+            $uniqueCategoryIDs = array_values(array_unique($validated['categoryIDs'] ?? []));
+            $idea->categories()->sync($uniqueCategoryIDs);
+        }
+
+        // overwrite all old documents if new documents are uploaded
+        if ($request->hasFile('documents')) {
+            foreach ($idea->documents as $oldDocument) {
+                if ($oldDocument->docPath && Storage::disk('public')->exists($oldDocument->docPath)) {
+                    Storage::disk('public')->delete($oldDocument->docPath);
+                }
+                $oldDocument->delete();
             }
 
-            $validated = $request->validate([
-                'title' => 'required|string|max:255',
-                'description' => 'required|string',
-                'isAnonymous' => 'nullable|boolean',
-                'staffID' => 'required|integer|exists:staffs,staffID',
-                'settingID' => 'required|integer|exists:closure_setting,settingID',
-                'status' => 'nullable|string|in:pending,approved,rejected'
-            ]);
+            foreach ($request->file('documents') as $file) {
+                $path = $file->store('idea_documents', 'public');
 
-            $idea->update($validated);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Idea updated successfully',
-                'data' => $idea
-            ], 200);
-
-        } catch (ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'data' => $e->errors()
-            ], 422);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unexpected error occurred',
-                'data' => $e->getMessage()
-            ], 500);
+                Document::create([
+                    'docPath' => $path,
+                    'fileType' => $file->getClientOriginalExtension(),
+                    'fileSize' => $file->getSize(),
+                    'isHidden' => false,
+                    'ideaID' => $idea->ideaID,
+                ]);
+            }
         }
-    }
 
+        DB::commit();
+
+        $idea->load([
+            'staff',
+            'closureSetting',
+            'categories',
+            'comments',
+            'votes',
+            'documents'
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Idea updated successfully',
+            'data' => $idea
+        ], 200);
+
+    } catch (ValidationException $e) {
+        DB::rollBack();
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Validation failed',
+            'data' => $e->errors()
+        ], 422);
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Unexpected error occurred',
+            'data' => $e->getMessage()
+        ], 500);
+    }
+}
+    public function updateStatus(Request $request, $id)
+{
+    try {
+        $idea = Idea::find($id);
+
+        if (!$idea || $idea->status === 'deleted') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Idea not found',
+                'data' => null
+            ], 404);
+        }
+
+        $validated = $request->validate([
+            'status' => 'required|string|in:approved,rejected',
+            'settingID' => 'nullable|integer|exists:closure_setting,settingID',
+        ]);
+
+        if ($validated['status'] === 'approved' && empty($validated['settingID'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'settingID is required when approving an idea',
+                'data' => null
+            ], 422);
+        }
+
+        $idea->status = $validated['status'];
+
+        if ($validated['status'] === 'approved') {
+            $idea->settingID = $validated['settingID'];
+        }
+
+        if ($validated['status'] === 'rejected') {
+            $idea->settingID = null;
+        }
+
+        $idea->save();
+
+        $idea->load([
+            'staff',
+            'closureSetting',
+            'categories',
+            'comments',
+            'votes',
+            'documents'
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Idea status updated successfully',
+            'data' => $idea
+        ], 200);
+
+    } catch (ValidationException $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Validation failed',
+            'data' => $e->errors()
+        ], 422);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Unexpected error occurred',
+            'data' => $e->getMessage()
+        ], 500);
+    }
+}
+
+    public function updateOnlyStatus(Request $request, $id)
+{
+    try {
+        $idea = Idea::find($id);
+
+        if (!$idea || $idea->status === 'deleted') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Idea not found',
+                'data' => null
+            ], 404);
+        }
+
+        $validated = $request->validate([
+            'status' => 'required|string|in:pending,approved,rejected'
+        ]);
+
+        $idea->status = $validated['status'];
+        $idea->save();
+
+        $idea->load([
+            'staff',
+            'closureSetting',
+            'categories',
+            'comments',
+            'votes',
+            'documents'
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Idea status updated successfully',
+            'data' => $idea
+        ], 200);
+
+    } catch (ValidationException $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Validation failed',
+            'data' => $e->errors()
+        ], 422);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Unexpected error occurred',
+            'data' => $e->getMessage()
+        ], 500);
+    }
+}
+    public function increaseViewCount($id)
+{
+    try {
+        $idea = Idea::find($id);
+
+        if (!$idea || $idea->status === 'deleted') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Idea not found',
+                'data' => null
+            ], 404);
+        }
+
+        $idea->increment('viewCount');
+        $idea->refresh();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'View count increased successfully',
+            'data' => $idea
+        ], 200);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to increase view count',
+            'data' => $e->getMessage()
+        ], 500);
+    }
+}
     public function destroy($id)
     {
         try {
@@ -142,12 +432,13 @@ class IdeaController extends Controller
                 ], 404);
             }
 
-            $idea->delete();
+            $idea->status = 'deleted';
+            $idea->save();
 
             return response()->json([
                 'success' => true,
                 'message' => 'Idea deleted successfully',
-                'data' => null
+                'data' => $idea
             ], 200);
 
         } catch (\Exception $e) {

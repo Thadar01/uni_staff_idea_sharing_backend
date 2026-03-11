@@ -10,7 +10,6 @@ class Idea extends Model
     use HasFactory;
 
     protected $table = 'idea';
-
     protected $primaryKey = 'ideaID';
 
     protected $fillable = [
@@ -25,31 +24,26 @@ class Idea extends Model
         'isCommentEnabled'
     ];
 
-    // Relationship: Idea belongs to Staff
     public function staff()
     {
         return $this->belongsTo(Staff::class, 'staffID', 'staffID');
     }
 
-    // Relationship: Idea belongs to ClosureSetting
     public function closureSetting()
     {
         return $this->belongsTo(ClosureSetting::class, 'settingID', 'settingID');
     }
 
-    // Relationship: Idea has many Comments
     public function comments()
     {
         return $this->hasMany(Comment::class, 'ideaID', 'ideaID');
     }
 
-    // Relationship: Idea has many Votes
     public function votes()
     {
         return $this->hasMany(Vote::class, 'ideaID', 'ideaID');
     }
 
-    // Relationship: Idea belongs to many Categories (pivot table)
     public function categories()
     {
         return $this->belongsToMany(
@@ -58,5 +52,10 @@ class Idea extends Model
             'ideaID',
             'categoryID'
         );
+    }
+
+    public function documents()
+    {
+        return $this->hasMany(Document::class, 'ideaID', 'ideaID');
     }
 }

@@ -125,33 +125,34 @@ class CommentController extends Controller
         }
     }
 
-    public function destroy($id)
-    {
-        try {
-            $comment = Comment::find($id);
+  public function destroy($id)
+{
+    try {
+        $comment = Comment::find($id);
 
-            if (!$comment) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Comment not found',
-                    'data' => null
-                ], 404);
-            }
-
-            $comment->delete();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Comment deleted successfully',
-                'data' => null
-            ], 200);
-
-        } catch (\Exception $e) {
+        if (!$comment) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to delete comment',
-                'data' => $e->getMessage()
-            ], 500);
+                'message' => 'Comment not found',
+                'data' => null
+            ], 404);
         }
+
+        $comment->status = 'deleted';
+        $comment->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Comment deleted successfully',
+            'data' => $comment
+        ], 200);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to delete comment',
+            'data' => $e->getMessage()
+        ], 500);
     }
+}
 }

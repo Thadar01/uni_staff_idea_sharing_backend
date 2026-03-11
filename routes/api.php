@@ -79,26 +79,16 @@ Route::post('/staff/login', [StaffAuthController::class, 'login']);
     Route::delete('/closure-settings/{id}', [ClosureSettingController::class, 'destroy']);
 
     // Ideas
-    Route::get('/ideas', [IdeaController::class, 'index']);
-    Route::get('/ideas/{id}', [IdeaController::class, 'show']);
-    Route::post('/ideas', [IdeaController::class, 'store']);
-    Route::post('/ideas/{id}', [IdeaController::class, 'update']);
-    Route::delete('/ideas/{id}', [IdeaController::class, 'destroy']);
-
-    // Idea-Category mappings
-    Route::get('/idea-categories', [IdeaCategoryController::class, 'index']);
-    Route::get('/idea-categories/{id}', [IdeaCategoryController::class, 'show']);
-    Route::post('/idea-categories', [IdeaCategoryController::class, 'store']);
-    Route::post('/idea-categories/{id}', [IdeaCategoryController::class, 'update']);
-    Route::delete('/idea-categories/{id}', [IdeaCategoryController::class, 'destroy']);
-
-    // Documents
-    Route::get('/documents', [DocumentController::class, 'index']);
-    Route::get('/documents/{id}', [DocumentController::class, 'show']);
-    Route::post('/documents', [DocumentController::class, 'store']);
-    Route::post('/documents/{id}', [DocumentController::class, 'update']);
-    Route::delete('/documents/{id}', [DocumentController::class, 'destroy']);
-
+Route::get('/ideas', [IdeaController::class, 'index']);
+Route::get('/ideas/{id}', [IdeaController::class, 'show']);
+Route::post('/ideas', [IdeaController::class, 'store']);
+Route::post('/ideas/{id}', [IdeaController::class, 'update']);
+Route::patch('/ideas/{id}', [IdeaController::class, 'update']);
+Route::delete('/ideas/{id}', [IdeaController::class, 'destroy']);
+Route::post('/ideas/{id}/status', [IdeaController::class, 'updateStatus']);
+Route::post('/ideas/{id}/only-status', [IdeaController::class, 'updateOnlyStatus']);
+Route::post('/ideas/{id}/increase-view', [IdeaController::class, 'increaseViewCount']);
+  
     // Comments
     Route::get('/comments', [CommentController::class, 'index']);
     Route::get('/comments/{id}', [CommentController::class, 'show']);
