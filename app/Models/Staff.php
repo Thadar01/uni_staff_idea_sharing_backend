@@ -22,6 +22,8 @@ class Staff extends Authenticatable implements JWTSubject
         'termsAccepted',
         'termsAcceptedDate',
         'createdDateTime',
+        'last_login_at',
+        'account_status',
         'departmentID',
         'roleID'
     ];

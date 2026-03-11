@@ -15,7 +15,11 @@ class Document extends Model
 
     protected $fillable = [
         'docPath',
+        'fileType',
+        'fileSize',
+        'isHidden',
         'ideaID'
+       
     ];
 
     // Relationship: Document belongs to Idea
