@@ -20,7 +20,7 @@ class IdeaController extends Controller
             'staff',
             'closureSetting',
             'categories',
-            'comments',
+            'comments.staff',
             'votes',
             'documents'
         ])
@@ -92,7 +92,7 @@ class IdeaController extends Controller
                 'staff',
                 'closureSetting',
                 'categories',
-                'comments',
+                'comments.staff',
                 'votes',
                 'documents'
             ]);
@@ -140,7 +140,7 @@ class IdeaController extends Controller
         'categories',
         'votes',
         'documents',
-        'comments' => function ($query) {
+        'comments.staff' => function ($query) {
             $query->where('status', '!=', 'deleted');
         }
     ])
@@ -240,7 +240,7 @@ public function update(Request $request, $id)
             'staff',
             'closureSetting',
             'categories',
-            'comments',
+            'comments.staff',
             'votes',
             'documents'
         ]);
@@ -312,7 +312,7 @@ public function update(Request $request, $id)
             'staff',
             'closureSetting',
             'categories',
-            'comments',
+            'comments.staff',
             'votes',
             'documents'
         ]);
@@ -363,7 +363,7 @@ public function update(Request $request, $id)
             'staff',
             'closureSetting',
             'categories',
-            'comments',
+            'comments.staff',
             'votes',
             'documents'
         ]);
