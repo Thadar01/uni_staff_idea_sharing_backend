@@ -53,6 +53,7 @@ Route::post('/staff/login', [StaffAuthController::class, 'login']);
     Route::post('/staffs', [StaffController::class, 'store']);
     Route::post('/staffs/{id}', [StaffController::class, 'update']);
     Route::delete('/staffs/{id}', [StaffController::class, 'destroy']);
+    Route::patch('/staffs/{id}/status', [StaffController::class, 'updateStatus']);
 
     // Permissions
     Route::get('/permissions', [PermissionController::class, 'index']);

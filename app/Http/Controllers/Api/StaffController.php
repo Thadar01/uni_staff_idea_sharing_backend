@@ -203,6 +203,41 @@ public function index(Request $request)
     ]);
 }
 
+public function updateStatus(Request $request, $id)
+{
+    $staff = Staff::find($id);
+
+    if (!$staff) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Staff not found',
+            'data' => null
+        ], 404);
+    }
+
+    $validator = Validator::make($request->all(), [
+        'account_status' => 'required|in:active,disabled'
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Validation failed',
+            'data' => $validator->errors()
+        ], 422);
+    }
+
+    $staff->update([
+        'account_status' => $request->account_status
+    ]);
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Staff status updated successfully.',
+        'data' => $staff->fresh()
+    ], 200);
+}
+
     /**
      * Delete staff
      */
