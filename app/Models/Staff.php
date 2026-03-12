@@ -31,6 +31,12 @@ class Staff extends Authenticatable implements JWTSubject
     protected $hidden = [
         'staffPassword'
     ];
+    protected $casts = [
+    'termsAccepted' => 'boolean',
+    'termsAcceptedDate' => 'datetime:Y-m-d H:i:s',
+    'createdDateTime' => 'datetime:Y-m-d H:i:s',
+    'last_login_at' => 'datetime:Y-m-d H:i:s',
+];
 
     /**
      * Tell Laravel which column is password

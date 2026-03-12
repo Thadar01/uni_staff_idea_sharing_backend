@@ -13,7 +13,7 @@ class DepartmentController extends Controller
    // GET /api/departments
 public function index()
 {
-    $departments = Department::all();
+      $departments = Department::with('qaCoordinator')->get();
 
     if ($departments->isEmpty()) {
         return response()->json([
@@ -64,7 +64,7 @@ public function store(Request $request)
     // GET /api/departments/{id}
     public function show($id)
     {
-        $department = Department::find($id);
+        $department = Department::with('qaCoordinator')->find($id);
 
         if (!$department) {
             return response()->json([

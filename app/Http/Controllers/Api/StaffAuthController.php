@@ -46,7 +46,8 @@ class StaffAuthController extends Controller
 
             // Set custom token TTL: 3 days = 60 * 24 * 3 minutes
             JWTAuth::factory()->setTTL(60 * 24 * 3); // 3 days
-
+            $staff->last_login_at =now()->timezone('Asia/Yangon');
+            $staff->save();
             $token = auth('staff')->login($staff);
 
             return response()->json([

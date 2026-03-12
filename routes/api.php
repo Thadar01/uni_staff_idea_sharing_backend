@@ -12,6 +12,8 @@ use App\Http\Controllers\API\IdeaCategoryController;
 use App\Http\Controllers\API\DocumentController;
 use App\Http\Controllers\API\CommentController;
 use App\Http\Controllers\API\VoteController;
+use App\Http\Controllers\API\ReportController;
+
 
 
 // ======================
@@ -102,3 +104,9 @@ Route::post('/ideas/{id}/increase-view', [IdeaController::class, 'increaseViewCo
     Route::post('/votes', [VoteController::class, 'store']);
     Route::post('/votes/{id}', [VoteController::class, 'update']);
     Route::delete('/votes/{id}', [VoteController::class, 'destroy']);
+
+    Route::get('/reports', [ReportController::class, 'index']);
+Route::get('/reports/{id}', [ReportController::class, 'show']);
+Route::post('/reports', [ReportController::class, 'store']);
+Route::put('/reports/{id}', [ReportController::class, 'update']);
+// Route::delete('/reports/{id}', [ReportController::class, 'destroy']);

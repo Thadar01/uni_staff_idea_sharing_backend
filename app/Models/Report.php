@@ -16,7 +16,8 @@ class Report extends Model
         'report_type',
         'reason',
         'status',
-        'report_entity_id',
+        'ideaID',
+        'commentID',
         'reporter_id',
         'resolved_by'
     ];
@@ -33,18 +34,15 @@ class Report extends Model
         return $this->belongsTo(Staff::class, 'resolved_by', 'staffID');
     }
 
-    // Relationship: If report is for an idea
+    // Relationship: Report belongs to an idea
     public function idea()
     {
-        return $this->belongsTo(Idea::class, 'report_entity_id', 'ideaID')
-                    ->where('report_type', 'idea');
+        return $this->belongsTo(Idea::class, 'ideaID', 'ideaID');
     }
 
-    // Relationship: If report is for a comment
+    // Relationship: Report belongs to a comment
     public function comment()
     {
-        return $this->belongsTo(Comment::class, 'report_entity_id', 'commentID')
-                    ->where('report_type', 'comment');
+        return $this->belongsTo(Comment::class, 'commentID', 'commentID');
     }
 }
-
