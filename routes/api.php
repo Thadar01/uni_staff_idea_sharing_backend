@@ -45,6 +45,7 @@ Route::post('/staff/login', [StaffAuthController::class, 'login']);
     Route::post('/departments', [DepartmentController::class, 'store']);
     Route::post('/departments/{id}', [DepartmentController::class, 'update']);
     Route::delete('/departments/{id}', [DepartmentController::class, 'destroy']);
+    Route::get('/departments/{id}/staffs', [DepartmentController::class, 'getStaffByDepartment']);
 
     // Staffs
     Route::get('/staffs', [StaffController::class, 'index']);

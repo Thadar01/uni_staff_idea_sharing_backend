@@ -29,6 +29,24 @@ public function index()
         'data' => $departments
     ]);
 }
+public function getStaffByDepartment($id)
+{
+    $department = Department::with('staffs')->find($id);
+
+    if (!$department) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Department not found',
+            'data' => null
+        ], 404);
+    }
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Staffs retrieved successfully.',
+        'data' => $department->staffs
+    ], 200);
+}
 
     // POST /api/departments
    // POST /api/departments
