@@ -134,18 +134,19 @@ class IdeaController extends Controller
 
    public function show($id)
 {
-    $idea = Idea::with([
-        'staff',
-        'closureSetting',
-        'categories',
-        'votes',
-        'documents',
-        'comments.staff' => function ($query) {
-            $query->where('status', '!=', 'deleted');
-        }
-    ])
-    ->where('status', '!=', 'deleted')
-    ->find($id);
+  $idea = Idea::with([
+    'staff',
+    'closureSetting',
+    'categories',
+    'votes',
+    'documents',
+    'comments' => function ($query) {
+        $query->where('status', '!=', 'deleted');
+    },
+    'comments.staff'
+])
+->where('status', '!=', 'deleted')
+->find($id);
 
     if (!$idea) {
         return response()->json([
