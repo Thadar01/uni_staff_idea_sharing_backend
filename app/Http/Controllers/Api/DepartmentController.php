@@ -31,7 +31,7 @@ public function index()
 }
 public function getStaffByDepartment($id)
 {
-    $department = Department::with('staffs')->find($id);
+    $department = Department::with(['staffs.role'])->find($id);
 
     if (!$department) {
         return response()->json([
@@ -41,10 +41,27 @@ public function getStaffByDepartment($id)
         ], 404);
     }
 
+    $staffs = $department->staffs->map(function ($staff) use ($department) {
+        return [
+            'staffID' => $staff->staffID,
+            'staffName' => $staff->staffName,
+            'staffEmail' => $staff->staffEmail,
+            'staffPhNo' => $staff->staffPhNo,
+            'staffDOB' => $staff->staffDOB,
+            'staffAddress' => $staff->staffAddress,
+            'staffProfile' => $staff->staffProfile,
+            'account_status' => $staff->account_status,
+            'departmentID' => $staff->departmentID,
+            'departmentName' => $department->departmentName,
+            'roleID' => $staff->roleID,
+            'roleName' => optional($staff->role)->roleName,
+        ];
+    });
+
     return response()->json([
         'success' => true,
         'message' => 'Staffs retrieved successfully.',
-        'data' => $department->staffs
+        'data' => $staffs
     ], 200);
 }
 
