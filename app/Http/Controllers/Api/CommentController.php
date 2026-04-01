@@ -153,6 +153,68 @@ class CommentController extends Controller
             'message' => 'Failed to delete comment',
             'data' => $e->getMessage()
         ], 500);
+        }
     }
-}
+
+    public function hide($id)
+    {
+        try {
+            $comment = Comment::find($id);
+
+            if (!$comment || $comment->status === 'deleted') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Comment not found',
+                    'data' => null
+                ], 404);
+            }
+
+            $comment->status = 'hidden';
+            $comment->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Comment hidden successfully',
+                'data' => $comment
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to hide comment',
+                'data' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function unhide($id)
+    {
+        try {
+            $comment = Comment::find($id);
+
+            if (!$comment || $comment->status === 'deleted') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Comment not found',
+                    'data' => null
+                ], 404);
+            }
+
+            $comment->status = 'active';
+            $comment->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Comment unhidden successfully',
+                'data' => $comment
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to unhide comment',
+                'data' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

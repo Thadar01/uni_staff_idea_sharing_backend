@@ -1,4 +1,5 @@
 <?php
+use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\API\StaffController;
 use App\Http\Controllers\API\DepartmentController;
@@ -54,6 +55,8 @@ Route::post('/staff/login', [StaffAuthController::class, 'login']);
     Route::post('/staffs/{id}', [StaffController::class, 'update']);
     Route::delete('/staffs/{id}', [StaffController::class, 'destroy']);
     Route::patch('/staffs/{id}/status', [StaffController::class, 'updateStatus']);
+    Route::patch('/staffs/{id}/hide-content', [StaffController::class, 'hideContent']);
+    Route::patch('/staffs/{id}/unhide-content', [StaffController::class, 'unhideContent']);
 
     // Permissions
     Route::get('/permissions', [PermissionController::class, 'index']);
@@ -92,6 +95,8 @@ Route::delete('/ideas/{id}', [IdeaController::class, 'destroy']);
 Route::post('/ideas/{id}/status', [IdeaController::class, 'updateStatus']);
 Route::post('/ideas/{id}/only-status', [IdeaController::class, 'updateOnlyStatus']);
 Route::post('/ideas/{id}/increase-view', [IdeaController::class, 'increaseViewCount']);
+Route::patch('/ideas/{id}/hide', [IdeaController::class, 'hide']);
+Route::patch('/ideas/{id}/unhide', [IdeaController::class, 'unhide']);
   
     // Comments
     Route::get('/comments', [CommentController::class, 'index']);
@@ -99,6 +104,8 @@ Route::post('/ideas/{id}/increase-view', [IdeaController::class, 'increaseViewCo
     Route::post('/comments', [CommentController::class, 'store']);
     Route::post('/comments/{id}', [CommentController::class, 'update']);
     Route::delete('/comments/{id}', [CommentController::class, 'destroy']);
+    Route::patch('/comments/{id}/hide', [CommentController::class, 'hide']);
+    Route::patch('/comments/{id}/unhide', [CommentController::class, 'unhide']);
 
     // Votes
     Route::get('/votes', [VoteController::class, 'index']);
@@ -111,4 +118,5 @@ Route::post('/ideas/{id}/increase-view', [IdeaController::class, 'increaseViewCo
 Route::get('/reports/{id}', [ReportController::class, 'show']);
 Route::post('/reports', [ReportController::class, 'store']);
 Route::put('/reports/{id}', [ReportController::class, 'update']);
+Route::get('/reports/department/{id}', [ReportController::class, 'getReportsByDepartment']);
 // Route::delete('/reports/{id}', [ReportController::class, 'destroy']);

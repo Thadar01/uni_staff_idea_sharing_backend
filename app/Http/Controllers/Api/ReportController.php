@@ -159,5 +159,36 @@ class ReportController extends Controller
         }
     }
 
-  
+    public function getReportsByDepartment($id)
+    {
+        try {
+            // Get reports where reporter belongs to the specified department
+            $reports = Report::with(['reporter', 'resolver', 'idea', 'comment'])
+                ->whereHas('reporter', function ($query) use ($id) {
+                    $query->where('departmentID', $id);
+                })
+                ->get();
+
+            if ($reports->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No reports found for this department',
+                    'data' => null
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Reports for the department retrieved successfully',
+                'data' => $reports
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unexpected error occurred',
+                'data' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

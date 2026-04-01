@@ -261,4 +261,80 @@ public function updateStatus(Request $request, $id)
             'data' => null
         ]);
     }
+
+    public function hideContent($id)
+    {
+        try {
+            $staff = Staff::find($id);
+
+            if (!$staff) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Staff not found',
+                    'data' => null
+                ], 404);
+            }
+
+            // Hide all ideas
+            \App\Models\Idea::where('staffID', $id)
+                ->where('status', '!=', 'deleted')
+                ->update(['status' => 'hidden']);
+
+            // Hide all comments
+            \App\Models\Comment::where('staffID', $id)
+                ->where('status', '!=', 'deleted')
+                ->update(['status' => 'hidden']);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'All ideas and comments of the staff have been hidden',
+                'data' => null
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to hide staff content',
+                'data' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function unhideContent($id)
+    {
+        try {
+            $staff = Staff::find($id);
+
+            if (!$staff) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Staff not found',
+                    'data' => null
+                ], 404);
+            }
+
+            // Unhide all ideas (set back to approved)
+            \App\Models\Idea::where('staffID', $id)
+                ->where('status', 'hidden')
+                ->update(['status' => 'approved']);
+
+            // Unhide all comments (set back to active)
+            \App\Models\Comment::where('staffID', $id)
+                ->where('status', 'hidden')
+                ->update(['status' => 'active']);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'All ideas and comments of the staff have been unhidden',
+                'data' => null
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to unhide staff content',
+                'data' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

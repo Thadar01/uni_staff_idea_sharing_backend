@@ -420,6 +420,7 @@ public function update(Request $request, $id)
         ], 500);
     }
 }
+
     public function destroy($id)
     {
         try {
@@ -450,4 +451,67 @@ public function update(Request $request, $id)
             ], 500);
         }
     }
+
+    public function hide($id)
+    {
+        try {
+            $idea = Idea::find($id);
+
+            if (!$idea || $idea->status === 'deleted') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Idea not found',
+                    'data' => null
+                ], 404);
+            }
+
+            $idea->status = 'hidden';
+            $idea->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Idea hidden successfully',
+                'data' => $idea
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to hide idea',
+                'data' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function unhide($id)
+    {
+        try {
+            $idea = Idea::find($id);
+
+            if (!$idea || $idea->status === 'deleted') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Idea not found',
+                    'data' => null
+                ], 404);
+            }
+
+            $idea->status = 'approved'; 
+            $idea->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Idea unhidden successfully',
+                'data' => $idea
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to unhide idea',
+                'data' => $e->getMessage()
+            ], 500);
+        }
+    }
 }
+
