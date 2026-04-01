@@ -58,4 +58,9 @@ class Idea extends Model
     {
         return $this->hasMany(Document::class, 'ideaID', 'ideaID');
     }
+
+    public function reports()
+    {
+        return $this->hasMany(Report::class, 'ideaID', 'ideaID');
+    }
 }

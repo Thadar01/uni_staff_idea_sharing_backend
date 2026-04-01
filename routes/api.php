@@ -14,8 +14,7 @@ use App\Http\Controllers\API\DocumentController;
 use App\Http\Controllers\API\CommentController;
 use App\Http\Controllers\API\VoteController;
 use App\Http\Controllers\API\ReportController;
-
-
+use App\Http\Controllers\Api\SystemReportController;
 
 // ======================
 // Public Routes
@@ -57,6 +56,9 @@ Route::post('/staff/login', [StaffAuthController::class, 'login']);
     Route::patch('/staffs/{id}/status', [StaffController::class, 'updateStatus']);
     Route::patch('/staffs/{id}/hide-content', [StaffController::class, 'hideContent']);
     Route::patch('/staffs/{id}/unhide-content', [StaffController::class, 'unhideContent']);
+    
+    // System Reports (Usage Monitoring)
+    Route::get('/system-reports/usage', [SystemReportController::class, 'getUsageStats']);
 
     // Permissions
     Route::get('/permissions', [PermissionController::class, 'index']);
@@ -84,6 +86,8 @@ Route::post('/staff/login', [StaffAuthController::class, 'login']);
     Route::post('/closure-settings', [ClosureSettingController::class, 'store']);
     Route::post('/closure-settings/{id}', [ClosureSettingController::class, 'update']);
     Route::delete('/closure-settings/{id}', [ClosureSettingController::class, 'destroy']);
+    Route::get('/closure-settings/{id}/download-documents', [ClosureSettingController::class, 'downloadZip']);
+    Route::get('/closure-settings/{id}/export-ideas', [ClosureSettingController::class, 'exportIdeas']);
 
     // Ideas
 Route::get('/ideas', [IdeaController::class, 'index']);

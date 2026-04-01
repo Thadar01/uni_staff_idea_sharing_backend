@@ -73,8 +73,16 @@ class IdeaController extends Controller
 }
 
             if ($request->hasFile('documents')) {
+                $destinationPath = public_path('idea_documents');
+                if (!file_exists($destinationPath)) {
+                    mkdir($destinationPath, 0755, true);
+                }
+
                 foreach ($request->file('documents') as $file) {
-                    $path = $file->store('idea_documents', 'public');
+                    // Create a unique filename
+                    $fileName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                    $file->move($destinationPath, $fileName);
+                    $path = 'idea_documents/' . $fileName;
 
                     Document::create([
                         'docPath' => $path,
@@ -215,15 +223,23 @@ public function update(Request $request, $id)
 
         // overwrite all old documents if new documents are uploaded
         if ($request->hasFile('documents')) {
+            $destinationPath = public_path('idea_documents');
+            if (!file_exists($destinationPath)) {
+                mkdir($destinationPath, 0755, true);
+            }
+
             foreach ($idea->documents as $oldDocument) {
-                if ($oldDocument->docPath && Storage::disk('public')->exists($oldDocument->docPath)) {
-                    Storage::disk('public')->delete($oldDocument->docPath);
+                $oldPath = public_path($oldDocument->docPath);
+                if ($oldDocument->docPath && file_exists($oldPath)) {
+                    unlink($oldPath);
                 }
                 $oldDocument->delete();
             }
 
             foreach ($request->file('documents') as $file) {
-                $path = $file->store('idea_documents', 'public');
+                $fileName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                $file->move($destinationPath, $fileName);
+                $path = 'idea_documents/' . $fileName;
 
                 Document::create([
                     'docPath' => $path,
