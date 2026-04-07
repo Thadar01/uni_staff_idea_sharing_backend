@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\Role;
@@ -10,74 +10,74 @@ use Illuminate\Support\Facades\Validator;
 class RoleController extends Controller
 {
     // GET all roles
-public function index()
-{
-    $roles = Role::with('permissions')->get();
+    public function index()
+    {
+        $roles = Role::with('permissions')->get();
 
-    if ($roles->isEmpty()) {
+        if ($roles->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No roles found.',
+                'data' => []
+            ], 404);
+        }
+
         return response()->json([
-            'success' => false,
-            'message' => 'No roles found.',
-            'data' => []
-        ], 404);
+            'success' => true,
+            'message' => 'Roles with permissions retrieved successfully.',
+            'data' => $roles
+        ], 200);
     }
-
-    return response()->json([
-        'success' => true,
-        'message' => 'Roles with permissions retrieved successfully.',
-        'data' => $roles
-    ], 200);
-}
     // POST create role
-  // POST create role(s)
-public function store(Request $request)
-{
-    $validator = Validator::make($request->all(), [
-        'roles' => 'required|array|min:1',
-        'roles.*.roleName' => 'required|string|max:255',
-    ]);
+    // POST create role(s)
+    public function store(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'roles' => 'required|array|min:1',
+            'roles.*.roleName' => 'required|string|max:255',
+        ]);
 
-    if ($validator->fails()) {
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'data' => $validator->errors()
+            ], 422);
+        }
+
+        $createdRoles = [];
+
+        foreach ($request->roles as $roleData) {
+            $createdRoles[] = Role::create($roleData);
+        }
+
         return response()->json([
-            'success' => false,
-            'message' => 'Validation failed',
-            'data' => $validator->errors()
-        ], 422);
+            'success' => true,
+            'message' => 'Roles created successfully.',
+            'data' => $createdRoles
+        ], 201);
     }
-
-    $createdRoles = [];
-
-    foreach ($request->roles as $roleData) {
-        $createdRoles[] = Role::create($roleData);
-    }
-
-    return response()->json([
-        'success' => true,
-        'message' => 'Roles created successfully.',
-        'data' => $createdRoles
-    ], 201);
-}
 
 
     // GET single role
-   public function show($id)
-{
-    $role = Role::with('permissions')->find($id);
+    public function show($id)
+    {
+        $role = Role::with('permissions')->find($id);
 
-    if (!$role) {
+        if (!$role) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Role not found',
+                'data' => null
+            ], 404);
+        }
+
         return response()->json([
-            'success' => false,
-            'message' => 'Role not found',
-            'data' => null
-        ], 404);
+            'success' => true,
+            'message' => 'Role retrieved successfully.',
+            'data' => $role
+        ], 200);
     }
-
-    return response()->json([
-        'success' => true,
-        'message' => 'Role retrieved successfully.',
-        'data' => $role
-    ], 200);
-}
     // PUT update role
     public function update(Request $request, $id)
     {
