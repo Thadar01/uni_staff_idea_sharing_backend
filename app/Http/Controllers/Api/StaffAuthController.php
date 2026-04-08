@@ -46,8 +46,14 @@ class StaffAuthController extends Controller
 
             // Set custom token TTL: 3 days = 60 * 24 * 3 minutes
             JWTAuth::factory()->setTTL(60 * 24 * 3); // 3 days
-            $staff->last_login_at =now()->timezone('Asia/Yangon');
+
+            // Capture the PREVIOUS login time for the UI reminder
+            $previousLogin = $staff->last_login_at;
+
+            // Update with the CURRENT login time
+            $staff->last_login_at = now()->timezone('Asia/Yangon');
             $staff->save();
+
             $token = auth('staff')->login($staff);
 
             return response()->json([
@@ -55,6 +61,7 @@ class StaffAuthController extends Controller
                 'message' => 'Login successful',
                 'data' => [
                     'user' => $staff,
+                    'previous_login_at' => $previousLogin, // Will be null for first login
                     'token' => $token,
                     'token_type' => 'bearer',
                     'expires_in' => JWTAuth::factory()->getTTL() * 60 // in seconds

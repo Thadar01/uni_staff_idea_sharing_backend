@@ -15,6 +15,7 @@ use App\Http\Controllers\API\CommentController;
 use App\Http\Controllers\API\VoteController;
 use App\Http\Controllers\API\ReportController;
 use App\Http\Controllers\API\SystemReportController;
+use App\Http\Controllers\API\DashboardController;
 
 // ======================
 // Public Routes
@@ -56,6 +57,9 @@ Route::delete('/staffs/{id}', [StaffController::class, 'destroy']);
 Route::patch('/staffs/{id}/status', [StaffController::class, 'updateStatus']);
 Route::patch('/staffs/{id}/hide-content', [StaffController::class, 'hideContent']);
 Route::patch('/staffs/{id}/unhide-content', [StaffController::class, 'unhideContent']);
+
+// Dashboard Statistics
+Route::get('/dashboard/stats', [DashboardController::class, 'getStats']);
 
 // System Reports (Usage Monitoring)
 Route::get('/system-reports/usage', [SystemReportController::class, 'getUsageStats']);

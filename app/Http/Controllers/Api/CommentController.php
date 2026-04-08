@@ -12,7 +12,9 @@ class CommentController extends Controller
 {
     public function index()
     {
-        $comments = Comment::with(['idea', 'staff'])->get();
+        $comments = Comment::with(['idea', 'staff'])
+            ->where('status', '!=', 'hidden')
+            ->get();
 
         return response()->json([
             'success' => true,
@@ -64,7 +66,9 @@ class CommentController extends Controller
 
     public function show($id)
     {
-        $comment = Comment::with(['idea', 'staff'])->find($id);
+        $comment = Comment::with(['idea', 'staff'])
+            ->where('status', '!=', 'hidden')
+            ->find($id);
 
         if (!$comment) {
             return response()->json([

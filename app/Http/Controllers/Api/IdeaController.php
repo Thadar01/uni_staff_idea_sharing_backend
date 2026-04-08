@@ -10,7 +10,10 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-
+use App\Models\Staff;
+use App\Mail\NewIdeaMail;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 
 class IdeaController extends Controller
 {
@@ -20,11 +23,13 @@ class IdeaController extends Controller
             'staff',
             'closureSetting',
             'categories',
-            'comments.staff',
+            'comments' => function($query) {
+                $query->where('status', '!=', 'hidden')->with('staff');
+            },
             'votes',
             'documents'
         ])
-        ->where('status', '!=', 'deleted')
+        ->whereNotIn('status', ['deleted', 'hidden'])
         ->get();
 
         return response()->json([
@@ -79,15 +84,20 @@ class IdeaController extends Controller
                 }
 
                 foreach ($request->file('documents') as $file) {
-                    // Create a unique filename
-                    $fileName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                    // Capture file info BEFORE moving the file to prevent "stat failed" error
+                    $originalName = $file->getClientOriginalName();
+                    $fileSize = $file->getSize();
+                    $fileExtension = $file->getClientOriginalExtension();
+
+                    // Create a filename using current time and original name
+                    $fileName = time() . '_' . $originalName;
                     $file->move($destinationPath, $fileName);
                     $path = 'idea_documents/' . $fileName;
 
                     Document::create([
                         'docPath' => $path,
-                        'fileType' => $file->getClientOriginalExtension(),
-                        'fileSize' => $file->getSize(),
+                        'fileType' => $fileExtension,
+                        'fileSize' => $fileSize,
                         'isHidden' => false,
                         'ideaID' => $idea->ideaID,
                     ]);
@@ -104,6 +114,31 @@ class IdeaController extends Controller
                 'votes',
                 'documents'
             ]);
+
+            // --- Email Notification Dispatching ---
+            try {
+                // 1. Get QA Managers
+                $qaManagers = Staff::whereHas('role', function($q) {
+                    $q->where('roleName', 'QA Manager');
+                })->whereNotNull('staffEmail')->pluck('staffEmail')->toArray();
+
+                // 2. Get QA Coordinators within the same department
+                $qaCoordinators = Staff::whereHas('role', function($q) {
+                    $q->where('roleName', 'QA Coordinator');
+                })->where('departmentID', $idea->staff ? $idea->staff->departmentID : null)
+                  ->whereNotNull('staffEmail')
+                  ->pluck('staffEmail')->toArray();
+
+                $recipients = array_unique(array_filter(array_merge($qaManagers, $qaCoordinators)));
+
+                if (!empty($recipients)) {
+                    Mail::to($recipients)->send(new NewIdeaMail($idea));
+                }
+            } catch (\Exception $e) {
+                // Log and silently catch so it doesn't break the idea creation API
+                Log::error('Failed to send New Idea email: ' . $e->getMessage());
+            }
+            // --------------------------------
 
             return response()->json([
                 'success' => true,
@@ -139,37 +174,35 @@ class IdeaController extends Controller
             ], 500);
         }
     }
+    public function show($id)
+    {
+        $idea = Idea::with([
+            'staff',
+            'closureSetting',
+            'categories',
+            'votes',
+            'documents',
+            'comments' => function($query) {
+                $query->where('status', '!=', 'hidden')->with('staff');
+            }
+        ])
+        ->whereNotIn('status', ['deleted', 'hidden'])
+        ->find($id);
 
-   public function show($id)
-{
-  $idea = Idea::with([
-    'staff',
-    'closureSetting',
-    'categories',
-    'votes',
-    'documents',
-    'comments' => function ($query) {
-        $query->where('status', '!=', 'deleted');
-    },
-    'comments.staff'
-])
-->where('status', '!=', 'deleted')
-->find($id);
+        if (!$idea) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Idea not found or hidden',
+                'data' => null
+            ], 404);
+        }
 
-    if (!$idea) {
         return response()->json([
-            'success' => false,
-            'message' => 'Idea not found',
-            'data' => null
-        ], 404);
+            'success' => true,
+            'message' => 'Idea retrieved successfully',
+            'data' => $idea
+        ], 200);
     }
-
-    return response()->json([
-        'success' => true,
-        'message' => 'Idea retrieved successfully',
-        'data' => $idea
-    ], 200);
-}
 
 public function update(Request $request, $id)
 {
@@ -237,14 +270,20 @@ public function update(Request $request, $id)
             }
 
             foreach ($request->file('documents') as $file) {
-                $fileName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                // Capture file info BEFORE moving the file to prevent "stat failed" error
+                $originalName = $file->getClientOriginalName();
+                $fileSize = $file->getSize();
+                $fileExtension = $file->getClientOriginalExtension();
+
+                // Create a filename using current time and original name
+                $fileName = time() . '_' . $originalName;
                 $file->move($destinationPath, $fileName);
                 $path = 'idea_documents/' . $fileName;
 
                 Document::create([
                     'docPath' => $path,
-                    'fileType' => $file->getClientOriginalExtension(),
-                    'fileSize' => $file->getSize(),
+                    'fileType' => $fileExtension,
+                    'fileSize' => $fileSize,
                     'isHidden' => false,
                     'ideaID' => $idea->ideaID,
                 ]);
