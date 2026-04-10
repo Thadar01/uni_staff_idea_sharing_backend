@@ -7,6 +7,9 @@ use App\Models\Comment;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
+use App\Mail\CommentNotificationMail;
 
 class CommentController extends Controller
 {
@@ -34,6 +37,24 @@ class CommentController extends Controller
             ]);
 
             $comment = Comment::create($validated);
+
+            // --- Email Notification Dispatching ---
+            try {
+                // Find the idea and its author
+                $idea = $comment->idea()->with('staff')->first();
+                
+                if ($idea && $idea->staff && !empty($idea->staff->staffEmail)) {
+                    // Check if the commenter is NOT the author of the idea
+                    if ($comment->staffID != $idea->staffID) {
+                        // Load commenter details for the email
+                        $comment->load('staff');
+                        Mail::to($idea->staff->staffEmail)->send(new CommentNotificationMail($comment, $idea));
+                    }
+                }
+            } catch (\Exception $e) {
+                // Log failure but don't stop the comment from being created
+                Log::error('Failed to send Comment notification: ' . $e->getMessage());
+            }
 
             return response()->json([
                 'success' => true,

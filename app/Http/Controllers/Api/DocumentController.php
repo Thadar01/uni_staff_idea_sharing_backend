@@ -134,6 +134,12 @@ class DocumentController extends Controller
                 ], 404);
             }
 
+            // Delete physical file if it exists
+            $filePath = public_path($document->docPath);
+            if ($document->docPath && file_exists($filePath)) {
+                unlink($filePath);
+            }
+
             $document->delete();
 
             return response()->json([

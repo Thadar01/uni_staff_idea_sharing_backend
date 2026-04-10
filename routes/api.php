@@ -105,6 +105,10 @@ Route::post('/ideas/{id}/only-status', [IdeaController::class, 'updateOnlyStatus
 Route::post('/ideas/{id}/increase-view', [IdeaController::class, 'increaseViewCount']);
 Route::patch('/ideas/{id}/hide', [IdeaController::class, 'hide']);
 Route::patch('/ideas/{id}/unhide', [IdeaController::class, 'unhide']);
+Route::post('/ideas/sync-closure-status', [IdeaController::class, 'syncClosureStatuses']);
+
+// Document Management
+Route::delete('/documents/{id}', [DocumentController::class, 'destroy']);
 
 // Comments
 Route::get('/comments', [CommentController::class, 'index']);
