@@ -32,9 +32,9 @@ class StaffAuthController extends Controller
 
         try {
             // Case-sensitive email check
- $staff = Staff::with(['role.permissions'])
-            ->whereRaw('BINARY staffEmail = ?', [$request->staffEmail])
-            ->first();
+            $staff = Staff::with(['role.permissions', 'department'])
+                ->whereRaw('BINARY staffEmail = ?', [$request->staffEmail])
+                ->first();
             // Verify password with bcrypt (default Laravel salting)
             if (!$staff || !Hash::check($request->staffPassword, $staff->staffPassword)) {
                 return response()->json([
