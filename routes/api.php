@@ -23,6 +23,7 @@ use App\Http\Controllers\API\DashboardController;
 
 // Only login is public
 Route::post('/staff/login', [StaffAuthController::class, 'login']);
+Route::post('/staff/reset-password-default', [StaffAuthController::class, 'resetPasswordToDefault']);
 
 // ======================
 // Protected Routes (JWT middleware)

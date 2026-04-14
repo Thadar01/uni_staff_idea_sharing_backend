@@ -194,4 +194,50 @@ class StaffAuthController extends Controller
             'data' => null
         ], 200);
     }
+
+    public function resetPasswordToDefault(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'staffID' => 'required|exists:staffs,staffID',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Staff ID not found or invalid format.',
+                'data' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            $staff = Staff::find($request->staffID);
+
+            if (!$staff) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Staff not found',
+                    'data' => null
+                ], 404);
+            }
+
+            // Set default password "Staff123!@#" and hash with bcrypt rounds 10
+            $defaultPassword = 'Staff123!@#';
+            $staff->update([
+                'staffPassword' => Hash::make($defaultPassword, ['rounds' => 10])
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Password has been reset to default successfully.',
+                'data' => null
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to reset password',
+                'data' => $e->getMessage()
+            ], 500);
+        }
+    }
 }
