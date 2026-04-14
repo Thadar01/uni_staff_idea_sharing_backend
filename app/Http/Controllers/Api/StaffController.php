@@ -337,4 +337,41 @@ public function updateStatus(Request $request, $id)
             ], 500);
         }
     }
+
+    /**
+     * Reset staff password to default
+     */
+    public function resetPassword($id)
+    {
+        try {
+            $staff = Staff::find($id);
+
+            if (!$staff) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Staff not found',
+                    'data' => null
+                ], 404);
+            }
+
+            // Set default password "Staff123!@#" and hash with bcrypt rounds 10
+            $defaultPassword = 'Staff123!@#';
+            $staff->update([
+                'staffPassword' => Hash::make($defaultPassword, ['rounds' => 10])
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Staff password has been reset to default successfully.',
+                'data' => null
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to reset staff password',
+                'data' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

@@ -32,6 +32,7 @@ Route::post('/staff/login', [StaffAuthController::class, 'login']);
 Route::post('/staff/logout', [StaffAuthController::class, 'logout']);
 Route::post('/staff/refresh', [StaffAuthController::class, 'refresh']);
 Route::get('/staff/me', [StaffAuthController::class, 'me']);
+Route::post('/staff/change-password', [StaffAuthController::class, 'changePassword']);
 
 // Roles
 Route::get('/roles', [RoleController::class, 'index']);
@@ -55,6 +56,7 @@ Route::post('/staffs', [StaffController::class, 'store']);
 Route::post('/staffs/{id}', [StaffController::class, 'update']);
 Route::delete('/staffs/{id}', [StaffController::class, 'destroy']);
 Route::patch('/staffs/{id}/status', [StaffController::class, 'updateStatus']);
+Route::patch('/staffs/{id}/reset-password', [StaffController::class, 'resetPassword']);
 Route::patch('/staffs/{id}/hide-content', [StaffController::class, 'hideContent']);
 Route::patch('/staffs/{id}/unhide-content', [StaffController::class, 'unhideContent']);
 

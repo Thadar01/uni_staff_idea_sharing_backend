@@ -148,4 +148,50 @@ class StaffAuthController extends Controller
             'data' => $staff
         ]);
     }
+
+    public function changePassword(Request $request)
+    {
+        $staff = auth('staff')->user();
+
+        if (!$staff) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized.',
+                'data' => null
+            ], 401);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'old_password' => 'required|string',
+            'new_password' => 'required|string|min:6|confirmed',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'data' => $validator->errors()
+            ], 422);
+        }
+
+        // Check old password
+        if (!Hash::check($request->old_password, $staff->staffPassword)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Old password does not match.',
+                'data' => null
+            ], 400);
+        }
+
+        // Update password
+        $staff->update([
+            'staffPassword' => Hash::make($request->new_password, ['rounds' => 10])
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Password changed successfully.',
+            'data' => null
+        ], 200);
+    }
 }
