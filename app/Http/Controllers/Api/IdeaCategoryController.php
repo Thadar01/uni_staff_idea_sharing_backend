@@ -31,8 +31,8 @@ class IdeaCategoryController extends Controller
 
             // Prevent duplicate
             $exists = IdeaCategory::where('ideaID', $validated['ideaID'])
-                        ->where('categoryID', $validated['categoryID'])
-                        ->exists();
+                ->where('categoryID', $validated['categoryID'])
+                ->exists();
 
             if ($exists) {
                 return response()->json([
@@ -112,9 +112,9 @@ class IdeaCategoryController extends Controller
 
             // Prevent duplicate on update
             $exists = IdeaCategory::where('ideaID', $validated['ideaID'])
-                        ->where('categoryID', $validated['categoryID'])
-                        ->where('ideaCatID', '!=', $id)
-                        ->exists();
+                ->where('categoryID', $validated['categoryID'])
+                ->where('ideaCatID', '!=', $id)
+                ->exists();
 
             if ($exists) {
                 return response()->json([

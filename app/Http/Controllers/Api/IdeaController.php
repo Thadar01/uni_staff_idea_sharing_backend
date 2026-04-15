@@ -40,7 +40,7 @@ class IdeaController extends Controller
         ], 200);
     }
 
-    public function getActiveIdeas()
+    public function getApprovedIdeas()
     {
         $ideas = Idea::with([
             'staff',
@@ -54,15 +54,15 @@ class IdeaController extends Controller
             'votes',
             'documents'
         ])
-            ->where('status', 'active') // ✅ only active ideas
+            ->where('status', 'approved') // ✅ changed here
             ->latest()
             ->paginate(5); // ✅ pagination = 5
 
         return response()->json([
             'success' => true,
             'message' => $ideas->isEmpty()
-                ? 'No active ideas found'
-                : 'Active ideas retrieved successfully',
+                ? 'No approved ideas found'
+                : 'Approved ideas retrieved successfully',
             'data' => $ideas
         ], 200);
     }
