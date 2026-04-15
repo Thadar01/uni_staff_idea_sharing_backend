@@ -36,7 +36,7 @@ class Idea extends Model
 
     public function comments()
     {
-        return $this->hasMany(Comment::class, 'ideaID', 'ideaID');
+        return $this->hasMany(Comment::class, 'ideaID', 'ideaID')->latest();
     }
 
     public function votes()

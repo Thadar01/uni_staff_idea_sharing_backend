@@ -17,6 +17,7 @@ class CommentController extends Controller
     {
         $comments = Comment::with(['idea', 'staff'])
             ->where('status', '!=', 'hidden')
+            ->latest()
             ->get();
 
         return response()->json([

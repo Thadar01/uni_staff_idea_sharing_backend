@@ -24,13 +24,14 @@ class IdeaController extends Controller
             'closureSetting',
             'categories',
             'comments' => function ($query) {
-                $query->where('status', 'active')->with('staff');
+                $query->where('status', 'active')->latest()->with('staff');
             },
             'votes',
             'documents'
         ])
             ->whereNotIn('status', ['deleted', 'hidden'])
-            ->get();
+            ->latest()
+            ->paginate(5);
 
         return response()->json([
             'success' => true,
@@ -183,7 +184,7 @@ class IdeaController extends Controller
             'votes',
             'documents',
             'comments' => function ($query) {
-                $query->where('status', 'active')->with('staff');
+                $query->where('status', 'active')->latest()->with('staff');
             }
         ])
             ->whereNotIn('status', ['deleted', 'hidden'])
