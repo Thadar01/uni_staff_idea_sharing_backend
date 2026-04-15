@@ -98,6 +98,7 @@ Route::get('/closure-settings/{id}/export-ideas', [ClosureSettingController::cla
 
 // Ideas
 Route::get('/ideas', [IdeaController::class, 'index']);
+Route::get('/ideas/approved', [IdeaController::class, 'getApprovedIdeas']);
 Route::get('/ideas/{id}', [IdeaController::class, 'show']);
 Route::post('/ideas', [IdeaController::class, 'store']);
 Route::post('/ideas/{id}', [IdeaController::class, 'update']);
@@ -109,7 +110,7 @@ Route::post('/ideas/{id}/increase-view', [IdeaController::class, 'increaseViewCo
 Route::patch('/ideas/{id}/hide', [IdeaController::class, 'hide']);
 Route::patch('/ideas/{id}/unhide', [IdeaController::class, 'unhide']);
 Route::post('/ideas/sync-closure-status', [IdeaController::class, 'syncClosureStatuses']);
-Route::get('/ideas/approved', [IdeaController::class, 'getApprovedIdeas']);
+
 // Document Management
 Route::delete('/documents/{id}', [DocumentController::class, 'destroy']);
 

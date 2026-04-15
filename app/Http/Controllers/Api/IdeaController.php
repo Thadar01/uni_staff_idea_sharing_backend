@@ -54,9 +54,9 @@ class IdeaController extends Controller
             'votes',
             'documents'
         ])
-            ->where('status', 'approved') // ✅ changed here
+            ->where('status', 'approved')
             ->latest()
-            ->paginate(5); // ✅ pagination = 5
+            ->paginate(5);
 
         return response()->json([
             'success' => true,
