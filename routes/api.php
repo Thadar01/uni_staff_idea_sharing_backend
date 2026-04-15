@@ -109,6 +109,7 @@ Route::post('/ideas/{id}/increase-view', [IdeaController::class, 'increaseViewCo
 Route::patch('/ideas/{id}/hide', [IdeaController::class, 'hide']);
 Route::patch('/ideas/{id}/unhide', [IdeaController::class, 'unhide']);
 Route::post('/ideas/sync-closure-status', [IdeaController::class, 'syncClosureStatuses']);
+Route::get('/ideas/active', [IdeaController::class, 'getActiveIdeas']);
 
 // Document Management
 Route::delete('/documents/{id}', [DocumentController::class, 'destroy']);

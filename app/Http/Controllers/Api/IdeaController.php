@@ -40,6 +40,32 @@ class IdeaController extends Controller
         ], 200);
     }
 
+    public function getActiveIdeas()
+    {
+        $ideas = Idea::with([
+            'staff',
+            'closureSetting',
+            'categories',
+            'comments' => function ($query) {
+                $query->where('status', 'active')
+                    ->latest()
+                    ->with('staff');
+            },
+            'votes',
+            'documents'
+        ])
+            ->where('status', 'active') // ✅ only active ideas
+            ->latest()
+            ->paginate(5); // ✅ pagination = 5
+
+        return response()->json([
+            'success' => true,
+            'message' => $ideas->isEmpty()
+                ? 'No active ideas found'
+                : 'Active ideas retrieved successfully',
+            'data' => $ideas
+        ], 200);
+    }
     public function store(Request $request)
     {
         try {
