@@ -83,7 +83,7 @@ class IdeaController extends Controller
                 'categoryIDs.*' => 'integer|exists:categories,categoryID',
 
                 'documents' => 'nullable|array',
-                'documents.*' => 'file|mimes:pdf,doc,docx,jpg,jpeg,png|max:5120'
+                'documents.*' => 'file|mimes:pdf,doc,docx,jpg,jpeg,png,xls,xlsx|max:5120'
             ]);
 
             DB::beginTransaction();
@@ -259,7 +259,7 @@ class IdeaController extends Controller
                 'categoryIDs.*' => 'integer|distinct|exists:categories,categoryID',
 
                 'documents' => 'nullable|array',
-                'documents.*' => 'file|mimes:pdf,doc,docx,jpg,jpeg,png|max:5120'
+                'documents.*' => 'file|mimes:pdf,doc,docx,jpg,jpeg,png,xls,xlsx|max:5120'
             ]);
 
             DB::beginTransaction();
