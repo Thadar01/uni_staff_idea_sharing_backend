@@ -151,6 +151,21 @@ public function destroy($id)
             ], 404);
         }
 
+        // --- NEW CONSTRAINT: Check for active usage ---
+        $hasActiveIdeas = $category->ideas()->whereHas('closureSetting', function ($query) {
+            // An idea is considered active if the final closure date has not passed yet
+            $query->where('finalclosureDate', '>=', now()->format('Y-m-d'));
+        })->exists();
+
+        if ($hasActiveIdeas) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot deactivate category. It is currently being used by ideas in an active academic cycle.',
+                'data' => null
+            ], 403);
+        }
+        // ----------------------------------------------
+
         // Soft delete by setting status to 'inactive'
         $category->status = 'inactive';
         $category->save();

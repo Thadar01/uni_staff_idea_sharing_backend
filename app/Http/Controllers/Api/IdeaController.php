@@ -172,19 +172,14 @@ class IdeaController extends Controller
 
             // --- Email Notification Dispatching ---
             try {
-                // 1. Get QA Managers
-                $qaManagers = Staff::whereHas('role', function ($q) {
-                    $q->where('roleName', 'QA Manager');
-                })->whereNotNull('staffEmail')->pluck('staffEmail')->toArray();
-
-                // 2. Get QA Coordinators within the same department
-                $qaCoordinators = Staff::whereHas('role', function ($q) {
+                // 1. Get QA Coordinators within the same department as the author
+                $recipients = Staff::whereHas('role', function ($q) {
                     $q->where('roleName', 'QA Coordinator');
                 })->where('departmentID', $idea->staff ? $idea->staff->departmentID : null)
                     ->whereNotNull('staffEmail')
-                    ->pluck('staffEmail')->toArray();
-
-                $recipients = array_unique(array_filter(array_merge($qaManagers, $qaCoordinators)));
+                    ->pluck('staffEmail')
+                    ->unique()
+                    ->toArray();
 
                 if (!empty($recipients)) {
                     Mail::to($recipients)->send(new NewIdeaMail($idea));

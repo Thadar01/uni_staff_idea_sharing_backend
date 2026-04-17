@@ -17,4 +17,14 @@ class Category extends Model
         'categoryname',
         'status'
     ];
+
+    public function ideas()
+    {
+        return $this->belongsToMany(
+            Idea::class,
+            'idea_category',
+            'categoryID',
+            'ideaID'
+        );
+    }
 }
