@@ -20,4 +20,9 @@ class ClosureSetting extends Model
         'academicYear',
         'status'
     ];
+
+    public function ideas()
+    {
+        return $this->hasMany(Idea::class, 'settingID', 'settingID');
+    }
 }

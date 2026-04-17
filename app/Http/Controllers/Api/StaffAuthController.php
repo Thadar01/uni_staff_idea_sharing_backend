@@ -31,11 +31,9 @@ class StaffAuthController extends Controller
         }
 
         try {
-            // Case-sensitive email check
             $staff = Staff::with(['role.permissions', 'department'])
                 ->whereRaw('BINARY staffEmail = ?', [$request->staffEmail])
                 ->first();
-            // Verify password with bcrypt (default Laravel salting)
             if (!$staff || !Hash::check($request->staffPassword, $staff->staffPassword)) {
                 return response()->json([
                     'success' => false,
@@ -44,13 +42,10 @@ class StaffAuthController extends Controller
                 ], 401);
             }
 
-            // Set custom token TTL: 3 days = 60 * 24 * 3 minutes
             JWTAuth::factory()->setTTL(60 * 24 * 3); // 3 days
 
-            // Capture the PREVIOUS login time for the UI reminder
             $previousLogin = $staff->last_login_at;
 
-            // Update with the CURRENT login time
             $staff->last_login_at = now()->timezone('Asia/Yangon');
             $staff->save();
 

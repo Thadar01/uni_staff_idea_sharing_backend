@@ -17,23 +17,23 @@ use App\Exports\IdeaExport;
 class ClosureSettingController extends Controller
 {
     public function index()
-{
-    $closureSettings = ClosureSetting::all();
+    {
+        $closureSettings = ClosureSetting::all();
 
-    if ($closureSettings->isEmpty()) {
+        if ($closureSettings->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No closure settings found',
+                'data' => null
+            ], 404);
+        }
+
         return response()->json([
-            'success' => false,
-            'message' => 'No closure settings found',
-            'data' => null
-        ], 404);
+            'success' => true,
+            'message' => 'Closure settings retrieved successfully',
+            'data' => $closureSettings
+        ], 200);
     }
-
-    return response()->json([
-        'success' => true,
-        'message' => 'Closure settings retrieved successfully',
-        'data' => $closureSettings
-    ], 200);
-}
 
     public function store(Request $request)
     {
@@ -139,37 +139,52 @@ class ClosureSettingController extends Controller
         }
     }
 
-   public function destroy($id)
-{
-    try {
-        $closureSetting = ClosureSetting::find($id);
+    public function destroy($id)
+    {
+        try {
+            $closureSetting = ClosureSetting::find($id);
 
-        if (!$closureSetting) {
+            if (!$closureSetting) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Closure setting not found',
+                    'data' => null
+                ], 404);
+            }
+
+            // --- MANDATORY CONSTRAINT ---
+            // Prevent deactivation if the setting has ideas of its own AND the academic cycle is still active
+            $hasIdeas = $closureSetting->ideas()->exists();
+            $isActive = Carbon::parse($closureSetting->finalclosureDate)->isFuture() || 
+                        Carbon::parse($closureSetting->finalclosureDate)->isToday();
+
+            if ($hasIdeas && $isActive) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot deactivate closure setting. It has associated ideas and the academic cycle is still active.',
+                    'data' => null
+                ], 403);
+            }
+            // ---------------------------
+
+            $closureSetting->update([
+                'status' => 'inactive'
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Closure setting status updated to inactive successfully',
+                'data' => $closureSetting->fresh()
+            ], 200);
+
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Closure setting not found',
-                'data' => null
-            ], 404);
+                'message' => 'Failed to update closure setting status',
+                'data' => $e->getMessage()
+            ], 500);
         }
-
-        $closureSetting->update([
-            'status' => 'inactive'
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Closure setting status updated to inactive successfully',
-            'data' => $closureSetting->fresh()
-        ], 200);
-
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Failed to update closure setting status',
-            'data' => $e->getMessage()
-        ], 500);
     }
-}
 
     public function downloadZip($id)
     {
@@ -222,7 +237,7 @@ class ClosureSettingController extends Controller
                 foreach ($ideas as $idea) {
                     foreach ($idea->documents as $document) {
                         $filePath = public_path($document->docPath);
-                        
+
                         // Fallback for files uploaded before the storage refactor
                         if (!file_exists($filePath)) {
                             $filePath = storage_path('app/public/' . $document->docPath);
@@ -307,7 +322,7 @@ class ClosureSettingController extends Controller
             }
 
             $format = strtolower($request->query('format', 'csv'));
-            
+
             // Map the format query param to Excel format class extension
             $extensions = [
                 'csv' => \Maatwebsite\Excel\Excel::CSV,
@@ -325,7 +340,7 @@ class ClosureSettingController extends Controller
 
             $fileName = 'closure_' . $id . '_ideas_' . now()->format('YmdHis') . '.' . $format;
             $downloadsDir = public_path('downloads');
-            
+
             if (!file_exists($downloadsDir)) {
                 mkdir($downloadsDir, 0755, true);
             }
