@@ -66,6 +66,34 @@ class IdeaController extends Controller
             'data' => $ideas
         ], 200);
     }
+
+    public function getPendingIdeasByDepartment($departmentID)
+    {
+        $ideas = Idea::with([
+            'staff',
+            'closureSetting',
+            'categories',
+            'comments' => function ($query) {
+                $query->where('status', 'active')->latest()->with('staff');
+            },
+            'votes',
+            'documents'
+        ])
+            ->where('status', 'pending')
+            ->whereHas('staff', function ($query) use ($departmentID) {
+                $query->where('departmentID', $departmentID);
+            })
+            ->latest()
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'message' => $ideas->isEmpty()
+                ? 'No pending ideas found for this department'
+                : 'Pending ideas for department retrieved successfully',
+            'data' => $ideas
+        ], 200);
+    }
     public function store(Request $request)
     {
         try {

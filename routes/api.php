@@ -101,6 +101,7 @@ Route::middleware('staff.auth')->group(function () {
     // Ideas
     Route::get('/ideas', [IdeaController::class, 'index']);
     Route::get('/ideas/approved', [IdeaController::class, 'getApprovedIdeas']);
+    Route::get('/ideas/pending/department/{id}', [IdeaController::class, 'getPendingIdeasByDepartment']);
     Route::get('/ideas/{id}', [IdeaController::class, 'show']);
     Route::post('/ideas', [IdeaController::class, 'store']);
     Route::post('/ideas/{id}', [IdeaController::class, 'update']);
