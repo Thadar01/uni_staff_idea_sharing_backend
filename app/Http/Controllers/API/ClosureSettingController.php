@@ -35,6 +35,20 @@ class ClosureSettingController extends Controller
         ], 200);
     }
 
+    public function getAcademicYears()
+    {
+        $academicYears = ClosureSetting::whereNotNull('academicYear')
+            ->distinct()
+            ->orderBy('academicYear', 'desc')
+            ->pluck('academicYear');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Academic years retrieved successfully',
+            'data' => $academicYears
+        ], 200);
+    }
+
     public function store(Request $request)
     {
         try {

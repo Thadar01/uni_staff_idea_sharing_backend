@@ -91,6 +91,7 @@ Route::middleware('staff.auth')->group(function () {
 
     // Closure Settings
     Route::get('/closure-settings', [ClosureSettingController::class, 'index']);
+    Route::get('/closure-settings/academic-years', [ClosureSettingController::class, 'getAcademicYears']);
     Route::get('/closure-settings/{id}', [ClosureSettingController::class, 'show']);
     Route::post('/closure-settings', [ClosureSettingController::class, 'store']);
     Route::post('/closure-settings/{id}', [ClosureSettingController::class, 'update']);
