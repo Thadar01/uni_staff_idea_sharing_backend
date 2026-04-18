@@ -112,6 +112,8 @@ class IdeaController extends Controller
 
                 'documents' => 'nullable|array',
                 'documents.*' => 'file|mimes:pdf,doc,docx,jpg,jpeg,png,xls,xlsx|max:5120'
+            ], [
+                'documents.*.max' => 'One or more files exceed the 5MB size limit.'
             ]);
 
             DB::beginTransaction();
@@ -201,7 +203,7 @@ class IdeaController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Validation failed',
+                'message' => $e->validator->errors()->first(),
                 'data' => $e->errors()
             ], 422);
 
@@ -283,6 +285,8 @@ class IdeaController extends Controller
 
                 'documents' => 'nullable|array',
                 'documents.*' => 'file|mimes:pdf,doc,docx,jpg,jpeg,png,xls,xlsx|max:5120'
+            ], [
+                'documents.*.max' => 'One or more files exceed the 5MB size limit.'
             ]);
 
             DB::beginTransaction();
@@ -354,7 +358,7 @@ class IdeaController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Validation failed',
+                'message' => $e->validator->errors()->first(),
                 'data' => $e->errors()
             ], 422);
 
@@ -424,7 +428,7 @@ class IdeaController extends Controller
         } catch (ValidationException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Validation failed',
+                'message' => $e->validator->errors()->first(),
                 'data' => $e->errors()
             ], 422);
 
@@ -475,7 +479,7 @@ class IdeaController extends Controller
         } catch (ValidationException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Validation failed',
+                'message' => $e->validator->errors()->first(),
                 'data' => $e->errors()
             ], 422);
 

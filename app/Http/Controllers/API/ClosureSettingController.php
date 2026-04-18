@@ -48,7 +48,7 @@ class ClosureSettingController extends Controller
         } catch (ValidationException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Validation failed',
+                'message' => $e->validator->errors()->first(),
                 'data' => $e->errors()
             ], 422);
 
@@ -118,7 +118,7 @@ class ClosureSettingController extends Controller
         } catch (ValidationException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Validation failed',
+                'message' => $e->validator->errors()->first(),
                 'data' => $e->errors()
             ], 422);
 

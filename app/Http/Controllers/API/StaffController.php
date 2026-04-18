@@ -52,9 +52,11 @@ public function index(Request $request)
         'staffAddress' => 'required|string',
         'departmentID' => 'required|exists:departments,departmentID',
         'roleID' => 'required|exists:roles,roleID',
-        'staffProfile' => 'nullable|image|mimes:jpg,jpeg,png|max:2048', // Only JPG/PNG, max 2MB
+        'staffProfile' => 'nullable|image|mimes:jpg,jpeg,png|max:5120', // Only JPG/PNG, max 5MB
         'termsAccepted' => 'nullable|boolean',
         'termsAcceptedDate' => 'nullable|date',
+    ], [
+        'staffProfile.max' => 'Profile picture size must not exceed 5MB.'
     ]);
 
     if ($validator->fails()) {
@@ -149,9 +151,11 @@ public function index(Request $request)
         'staffAddress' => 'sometimes|string',
         'departmentID' => 'sometimes|exists:departments,departmentID',
         'roleID' => 'sometimes|exists:roles,roleID',
-        'staffProfile' => 'nullable|image|mimes:jpg,jpeg,png|max:2048', // Only JPG/PNG
+        'staffProfile' => 'nullable|image|mimes:jpg,jpeg,png|max:5120', // Only JPG/PNG, max 5MB
         'termsAccepted' => 'sometimes|boolean',
         'termsAcceptedDate' => 'nullable|date',
+    ], [
+        'staffProfile.max' => 'Profile picture size must not exceed 5MB.'
     ]);
 
     if ($validator->fails()) {
