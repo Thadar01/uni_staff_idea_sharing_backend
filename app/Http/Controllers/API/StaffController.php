@@ -62,7 +62,7 @@ public function index(Request $request)
     if ($validator->fails()) {
         return response()->json([
             'success' => false,
-            'message' => 'Validation failed',
+            'message' => $validator->errors()->first(),
             'data' => $validator->errors()
         ], 422);
     }
@@ -161,7 +161,7 @@ public function index(Request $request)
     if ($validator->fails()) {
         return response()->json([
             'success' => false,
-            'message' => 'Validation failed',
+            'message' => $validator->errors()->first(),
             'data' => $validator->errors()
         ], 422);
     }
@@ -226,7 +226,7 @@ public function updateStatus(Request $request, $id)
     if ($validator->fails()) {
         return response()->json([
             'success' => false,
-            'message' => 'Validation failed',
+            'message' => $validator->errors()->first(),
             'data' => $validator->errors()
         ], 422);
     }
