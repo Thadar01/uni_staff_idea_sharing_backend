@@ -12,27 +12,27 @@ class DashboardController extends Controller
 {
     public function getStats(Request $request)
     {
-        $academicYear = $request->query('academicYear');
+        $settingID = $request->query('settingID');
 
         // 1. Top Stats Cards
         $statsCards = [
-            'totalIdeas' => $this->getTotalIdeas($academicYear),
-            'totalContributors' => $this->getTotalContributors($academicYear),
-            'anonymousIdeas' => $this->getAnonymousIdeasCount($academicYear),
-            'ideasWithoutComments' => $this->getIdeasWithoutCommentsCount($academicYear),
+            'totalIdeas' => $this->getTotalIdeas($settingID),
+            'totalContributors' => $this->getTotalContributors($settingID),
+            'anonymousIdeas' => $this->getAnonymousIdeasCount($settingID),
+            'ideasWithoutComments' => $this->getIdeasWithoutCommentsCount($settingID),
         ];
 
         // 2. Ideas by Department
-        $ideasByDepartment = $this->getIdeasByDepartment($academicYear);
+        $ideasByDepartment = $this->getIdeasByDepartment($settingID);
 
         // 3. Ideas by Category
-        $ideasByCategory = $this->getIdeasByCategory($academicYear);
+        $ideasByCategory = $this->getIdeasByCategory($settingID);
 
         // 4. Ideas by Month (Trends)
-        $ideasByMonth = $this->getIdeasByMonth($academicYear);
+        $ideasByMonth = $this->getIdeasByMonth($settingID);
 
         // 5. Contributor Trends (Unique staff per month)
-        $contributorTrends = $this->getContributorTrends($academicYear);
+        $contributorTrends = $this->getContributorTrends($settingID);
 
         return response()->json([
             'success' => true,
@@ -47,51 +47,35 @@ class DashboardController extends Controller
         ], 200);
     }
 
-    private function getTotalIdeas($academicYear)
+    private function getTotalIdeas($settingID)
     {
         $query = Idea::query()->where('status', '!=', 'deleted');
-        if ($academicYear) {
-            $query->whereHas('closureSetting', function($q) use ($academicYear) {
-                $q->where('academicYear', $academicYear);
-            });
-        }
+        if ($settingID) $query->where('settingID', $settingID);
         return $query->count();
     }
 
-    private function getTotalContributors($academicYear)
+    private function getTotalContributors($settingID)
     {
         $query = Idea::query()->where('status', '!=', 'deleted');
-        if ($academicYear) {
-            $query->whereHas('closureSetting', function($q) use ($academicYear) {
-                $q->where('academicYear', $academicYear);
-            });
-        }
+        if ($settingID) $query->where('settingID', $settingID);
         return $query->distinct('staffID')->count('staffID');
     }
 
-    private function getAnonymousIdeasCount($academicYear)
+    private function getAnonymousIdeasCount($settingID)
     {
         $query = Idea::query()->where('status', '!=', 'deleted')->where('isAnonymous', true);
-        if ($academicYear) {
-            $query->whereHas('closureSetting', function($q) use ($academicYear) {
-                $q->where('academicYear', $academicYear);
-            });
-        }
+        if ($settingID) $query->where('settingID', $settingID);
         return $query->count();
     }
 
-    private function getIdeasWithoutCommentsCount($academicYear)
+    private function getIdeasWithoutCommentsCount($settingID)
     {
         $query = Idea::query()->where('status', '!=', 'deleted')->doesntHave('comments');
-        if ($academicYear) {
-            $query->whereHas('closureSetting', function($q) use ($academicYear) {
-                $q->where('academicYear', $academicYear);
-            });
-        }
+        if ($settingID) $query->where('settingID', $settingID);
         return $query->count();
     }
 
-    private function getIdeasByDepartment($academicYear)
+    private function getIdeasByDepartment($settingID)
     {
         $query = DB::table('idea')
             ->join('staffs', 'idea.staffID', '=', 'staffs.staffID')
@@ -99,15 +83,12 @@ class DashboardController extends Controller
             ->select('departments.departmentName', DB::raw('count(*) as count'))
             ->where('idea.status', '!=', 'deleted');
 
-        if ($academicYear) {
-            $query->join('closure_setting', 'idea.settingID', '=', 'closure_setting.settingID')
-                  ->where('closure_setting.academicYear', $academicYear);
-        }
+        if ($settingID) $query->where('idea.settingID', $settingID);
 
         return $query->groupBy('departments.departmentName')->get();
     }
 
-    private function getIdeasByCategory($academicYear)
+    private function getIdeasByCategory($settingID)
     {
         $query = DB::table('categories')
             ->join('idea_category', 'categories.categoryID', '=', 'idea_category.categoryID')
@@ -115,22 +96,15 @@ class DashboardController extends Controller
             ->select('categories.categoryname', DB::raw('count(*) as count'))
             ->where('idea.status', '!=', 'deleted');
 
-        if ($academicYear) {
-            $query->join('closure_setting', 'idea.settingID', '=', 'closure_setting.settingID')
-                  ->where('closure_setting.academicYear', $academicYear);
-        }
+        if ($settingID) $query->where('idea.settingID', $settingID);
 
         return $query->groupBy('categories.categoryname')->get();
     }
 
-    private function getIdeasByMonth($academicYear)
+    private function getIdeasByMonth($settingID)
     {
         $query = Idea::query()->where('status', '!=', 'deleted');
-        if ($academicYear) {
-            $query->whereHas('closureSetting', function($q) use ($academicYear) {
-                $q->where('academicYear', $academicYear);
-            });
-        }
+        if ($settingID) $query->where('settingID', $settingID);
 
         return $query->select(
                 DB::raw('MONTHNAME(created_at) as month'),
@@ -141,14 +115,10 @@ class DashboardController extends Controller
             ->get();
     }
 
-    private function getContributorTrends($academicYear)
+    private function getContributorTrends($settingID)
     {
         $query = Idea::query()->where('status', '!=', 'deleted');
-        if ($academicYear) {
-            $query->whereHas('closureSetting', function($q) use ($academicYear) {
-                $q->where('academicYear', $academicYear);
-            });
-        }
+        if ($settingID) $query->where('settingID', $settingID);
 
         return $query->select(
                 DB::raw('MONTHNAME(created_at) as month'),
