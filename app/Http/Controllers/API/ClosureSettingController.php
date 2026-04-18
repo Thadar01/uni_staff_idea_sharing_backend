@@ -20,14 +20,6 @@ class ClosureSettingController extends Controller
     {
         $closureSettings = ClosureSetting::all();
 
-        if ($closureSettings->isEmpty()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'No closure settings found',
-                'data' => null
-            ], 404);
-        }
-
         return response()->json([
             'success' => true,
             'message' => 'Closure settings retrieved successfully',
@@ -169,8 +161,8 @@ class ClosureSettingController extends Controller
             // --- MANDATORY CONSTRAINT ---
             // Prevent deactivation if the setting has ideas of its own AND the academic cycle is still active
             $hasIdeas = $closureSetting->ideas()->exists();
-            $isActive = Carbon::parse($closureSetting->finalclosureDate)->isFuture() || 
-                        Carbon::parse($closureSetting->finalclosureDate)->isToday();
+            $isActive = Carbon::parse($closureSetting->finalclosureDate)->isFuture() ||
+                Carbon::parse($closureSetting->finalclosureDate)->isToday();
 
             if ($hasIdeas && $isActive) {
                 return response()->json([
